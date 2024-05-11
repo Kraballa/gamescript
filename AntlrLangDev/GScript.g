@@ -35,7 +35,7 @@ addOp: '+' | '-';
 compareOp: '==' | '!=' | '>' | '<' | '>=' | '<=';
 boolOp: BOOL_OP;
 
-BOOL_OP: 'and' | 'or';
+BOOL_OP: '&' | '|';
 
 constant: INTEGER | FLOAT | STRING | BOOL | NULL;
 
