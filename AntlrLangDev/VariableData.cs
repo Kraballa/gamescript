@@ -2,9 +2,9 @@ namespace AntlrLangDev
 {
     internal struct VariableData
     {
-        string Identifier;
-        Type Type;
-        object Data;
+        public string Identifier;
+        public Type Type;
+        public object Data;
 
         public VariableData(string identifier, Type type, object data)
         {
