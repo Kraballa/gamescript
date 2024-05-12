@@ -2,7 +2,7 @@ grammar GScript;
 
 program: line+ EOF;
 
-line: statement | ifBlock | whileBlock | block;
+line: statement | functionDefinition | ifBlock | whileBlock | block;
 
 statement: (assignment | functionCall) ';';
 
@@ -15,6 +15,8 @@ whileBlock: 'while' '(' expression ')' block;
 block: '{' line* '}';
 
 assignment: IDENTIFIER '=' expression;
+
+functionDefinition: 'function' IDENTIFIER '(' (expression (',' expression)*)? ')' block;
 
 functionCall: IDENTIFIER '(' (expression (',' expression)*)? ')';
 
@@ -42,8 +44,11 @@ constant: INTEGER | FLOAT | STRING | BOOL | NULL;
 
 // lexer
 
+FLOAT
+    : [0-9]+ '.' [0-9]*
+    | '.' [0-9]+
+    ;
 INTEGER: [1-9][0-9]*;
-FLOAT: [0-9]* '.' [0-9]*;
 STRING: ('"' ~'"'* '"') | ('\'' ~'\''* '\'');
 BOOL: 'true' | 'false';
 NULL: 'null';
