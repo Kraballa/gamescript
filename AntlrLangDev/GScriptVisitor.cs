@@ -67,15 +67,99 @@ namespace AntlrLangDev
         {
             var expressions = context.expression();
             var op = context.multOp();
-            
-            bool isInt = true;
 
-            foreach (var expression in expressions)
+            var res1 = Visit(expressions[0]);
+            var res2 = Visit(expressions[1]);
+
+            var type1 = res1.GetType();
+            var type2 = res2.GetType();
+
+            if ((type1 != typeof(int) && type1 != typeof(float)) ||
+            (type2 != typeof(int) && type2 != typeof(float)))
             {
-                
+                throw new Exception("error, invalid operator for mult operation");
             }
 
-            return base.VisitMultExpression(context);
+            bool isInt = type1 == typeof(int) && type2 == typeof(int);
+
+            switch (op.GetText())
+            {
+                case "*":
+                    if (isInt)
+                    {
+                        return (int)res1 * (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 * (float)res2;
+                    }
+                case "/":
+                    if (isInt)
+                    {
+                        return (int)res1 / (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 / (float)res2;
+                    }
+                case "%":
+                    if (isInt)
+                    {
+                        return (int)res1 % (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 % (float)res2;
+                    }
+            }
+            throw new Exception("error, invalid mult operation");
+        }
+
+        public override object VisitAddExpression([NotNull] GScriptParser.AddExpressionContext context)
+        {
+            var expressions = context.expression();
+            var op = context.addOp();
+
+            var res1 = Visit(expressions[0]);
+            var res2 = Visit(expressions[1]);
+
+            var type1 = res1.GetType();
+            var type2 = res2.GetType();
+
+            if (res1 == null || res2 == null)
+            {
+                throw new Exception("error, invalid operators for add operation");
+            }
+
+            //string concatenation
+            if(op.GetText() == "+" && (type1 == typeof(string) || type2 == typeof(string))){
+                return res1.ToString() + res2.ToString();
+            }
+
+            bool isInt = type1 == typeof(int) && type2 == typeof(int);
+
+            switch (op.GetText())
+            {
+                case "+":
+                    if (isInt)
+                    {
+                        return (int)res1 + (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 + (float)res2;
+                    }
+                case "-":
+                    if (isInt)
+                    {
+                        return (int)res1 - (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 - (float)res2;
+                    }
+            }
+            throw new Exception("error, invalid add operation");
         }
 
         public override object VisitBoolExpression([NotNull] GScriptParser.BoolExpressionContext context)
