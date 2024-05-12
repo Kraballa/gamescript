@@ -32,7 +32,7 @@ expression:
     | IDENTIFIER                      # identifierExpression
     | functionCall                    # functionCallExpression
     | '(' expression ')'              # enclosedExpression
-    | '(' type ')' expression         # typecastExpression
+    | expression '|' type             # typecastExpression
     | '!' expression                  # negatedExpression
     | expression multOp expression    # multExpression
     | expression addOp expression     # addExpression

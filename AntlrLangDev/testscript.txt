@@ -87,3 +87,8 @@ function testFunc(_test){
 }
 
 testFunc("Hello, Functions!");
+
+print((rand() * 10)|int);
+
+print(10.4|int > 10);
+print(10.9|int);
