@@ -1,23 +1,36 @@
 ﻿
+using System.Linq.Expressions;
 using Antlr4.Runtime.Misc;
 
 namespace AntlrLangDev
 {
     internal class GScriptVisitor : GScriptBaseVisitor<object?>
     {
-        private Dictionary<string, object> Variables { get; } = new();
+        private readonly Dictionary<string, object> Variables = new();
+        private readonly Dictionary<string, Func<object[], object>> Functions = new();
+
+        public GScriptVisitor()
+        {
+            Functions.Add("print", PrintOp);
+        }
+
+        private object PrintOp(object[] args)
+        {
+            Console.WriteLine(args[0].ToString());
+            return null;
+        }
 
 
-        public override object VisitAssignment([Antlr4.Runtime.Misc.NotNull] GScriptParser.AssignmentContext context)
+        public override object VisitAssignment([NotNull] GScriptParser.AssignmentContext context)
         {
             string name = context.IDENTIFIER().GetText();
             object? value = Visit(context.expression());
             Variables[name] = value;
-            Console.WriteLine($"{name} -> {value}");
+            //Console.WriteLine($"{name} -> {value}");
             return null;
         }
 
-        public override object VisitConstant([Antlr4.Runtime.Misc.NotNull] GScriptParser.ConstantContext context)
+        public override object VisitConstant([NotNull] GScriptParser.ConstantContext context)
         {
             if (context.INTEGER() is { } i)
             {
@@ -232,7 +245,7 @@ namespace AntlrLangDev
                     {
                         return (float)res1 != (float)res2;
                     }
-                    case ">":
+                case ">":
                     if (isInt)
                     {
                         return (int)res1 > (int)res2;
@@ -250,7 +263,7 @@ namespace AntlrLangDev
                     {
                         return (float)res1 < (float)res2;
                     }
-                    case ">=":
+                case ">=":
                     if (isInt)
                     {
                         return (int)res1 >= (int)res2;
@@ -325,6 +338,28 @@ namespace AntlrLangDev
                 }
             }
 
+            return null;
+        }
+
+        public override object VisitFunctionCall([NotNull] GScriptParser.FunctionCallContext context)
+        {
+            var ident = context.IDENTIFIER().GetText();
+            if (!Functions.ContainsKey(ident))
+            {
+                throw new Exception($"error, function {ident} not found.");
+            }
+
+            int numExpr = (context.children.Count - 2) / 2;
+            object[] _params = new object[numExpr];
+            for (int i = 0; i < _params.Length; i++)
+            {
+                object? ret = Visit(context.children[i * 2 + 2]);
+                if (ret == null)
+                    throw new Exception($"error, parameter at index {i} evaluated to null");
+                _params[i] = (object)ret;
+            }
+
+            Functions[ident].Invoke(_params);
             return null;
         }
 

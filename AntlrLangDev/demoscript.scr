@@ -10,7 +10,7 @@ u = y % z;
 a = false;
 b = (a | !a);
 
-while(i > 0) {
+while(i > -3) {
     i = i - 1;
     name = "Hello John";
     out = i + ": " + name;
@@ -21,7 +21,7 @@ if(i > 343){
     print(i);
 }
 
-if(i > 0) {
+if(i >= 0) {
     print("i > 0");
 }
 else if(i < 0) {
