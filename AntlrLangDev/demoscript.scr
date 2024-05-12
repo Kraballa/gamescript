@@ -17,6 +17,10 @@ while(i > 0) {
     print(out);
 }
 
+if(i > 343){
+    print(i);
+}
+
 if(i > 0) {
     print("i > 0");
 }

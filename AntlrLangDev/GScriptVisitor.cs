@@ -123,16 +123,17 @@ namespace AntlrLangDev
             var res1 = Visit(expressions[0]);
             var res2 = Visit(expressions[1]);
 
-            var type1 = res1.GetType();
-            var type2 = res2.GetType();
-
             if (res1 == null || res2 == null)
             {
                 throw new Exception("error, invalid operators for add operation");
             }
 
+            var type1 = res1.GetType();
+            var type2 = res2.GetType();
+
             //string concatenation
-            if(op.GetText() == "+" && (type1 == typeof(string) || type2 == typeof(string))){
+            if (op.GetText() == "+" && (type1 == typeof(string) || type2 == typeof(string)))
+            {
                 return res1.ToString() + res2.ToString();
             }
 
@@ -189,6 +190,51 @@ namespace AntlrLangDev
         public override object VisitEnclosedExpression([NotNull] GScriptParser.EnclosedExpressionContext context)
         {
             return Visit(context.expression());
+        }
+
+        public override object VisitWhileBlock([NotNull] GScriptParser.WhileBlockContext context)
+        {
+            while (IsTruthy(Visit(context.expression())))
+            {
+                Visit(context.block());
+            }
+            return null;
+        }
+
+        public override object VisitIfBlock([NotNull] GScriptParser.IfBlockContext context)
+        {
+            if (IsTruthy(Visit(context.expression())))
+            {
+                Visit(context.block());
+            }
+            else
+            {
+                var elifBlock = context.elseIfBlock();
+                if (!elifBlock.IsEmpty)
+                {
+                    Visit(elifBlock);
+                }
+            }
+
+            return null;
+        }
+
+        private bool IsTruthy(object? value)
+        {
+            if (value is bool b)
+            {
+                return b;
+            }
+            if (value is int i)
+            {
+                return i != 0;
+            }
+            if (value is float f)
+            {
+                return f != 0f;
+            }
+
+            throw new Exception($"error, can't decide truthiness of value {value}");
         }
     }
 }
