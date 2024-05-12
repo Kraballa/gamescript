@@ -6,16 +6,17 @@ namespace AntlrLangDev
 
     internal class GScriptVisitor : GScriptBaseVisitor<object?>
     {
+
         public readonly StackDict<object> Memory = new();
         private readonly Dictionary<string, Func<object[], object>> ExternalFuncts = new();
         private readonly Dictionary<string, NativeFuncData> NativeFuncts = new();
 
-        private int NumAsserts = 0;
-        private int FailedAsserts = 0;
+        private Random rand = new Random();
 
         public GScriptVisitor()
         {
             ExternalFuncts.Add("print", PrintOp);
+            ExternalFuncts.Add("rand", RandomOp);
         }
 
         private object PrintOp(object[] args)
@@ -24,29 +25,10 @@ namespace AntlrLangDev
             return null;
         }
 
-        private object AssertOp(object[] args)
+        private object RandomOp(object[] args)
         {
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (!IsTruthy(args[i]))
-                {
-                    Console.WriteLine($"error, assertion {i} faulty");
-                    FailedAsserts++;
-                }
-                NumAsserts++;
-            }
-            return null;
+            return (float)rand.NextDouble();
         }
-
-        private object FinalizeAssert(object[] args)
-        {
-            float ratio = 100 - FailedAsserts * 100f / NumAsserts;
-            Console.WriteLine($"result: {NumAsserts - FailedAsserts} / {NumAsserts} ({ratio}% correct)");
-            FailedAsserts = 0;
-            NumAsserts = 0;
-            return null;
-        }
-
 
         public override object VisitAssignment([NotNull] GScriptParser.AssignmentContext context)
         {
@@ -444,8 +426,10 @@ namespace AntlrLangDev
             var expressions = context.expression();
             NativeFuncData funcData = NativeFuncts[ident];
 
-            for(int i = 0; i < funcData.ParamNames.Length; i++){
-                if(Memory.ContainsKey(funcData.ParamNames[i])){
+            for (int i = 0; i < funcData.ParamNames.Length; i++)
+            {
+                if (Memory.ContainsKey(funcData.ParamNames[i]))
+                {
                     throw new Exception($"error, cannot reuse existing variable name {funcData.ParamNames[i]} (sorry it's a bit scuffed)");
                 }
                 var value = Visit(expressions[i]);

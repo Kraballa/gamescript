@@ -15,7 +15,7 @@ function assert(_obj){
 
 function finalizeAssert(){
     ratio = 100 - 100.0 * numFailures / numAsserts;
-    str = "result: " + (numAsserts - numFailures) + " / " + numAsserts + "(" + ratio + "% correct)";
+    str = "result: " + (numAsserts - numFailures) + " / " + numAsserts + " (" + ratio + "% correct)";
     print(str);
 
     numAsserts = 0;
@@ -87,3 +87,9 @@ function testFunc(_test){
 }
 
 testFunc("Hello, Functions!");
+
+i = 0;
+while(i < 10){
+    i = i + 1;
+    print(rand());
+}
