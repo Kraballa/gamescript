@@ -8,10 +8,14 @@ namespace AntlrLangDev
         public readonly Dictionary<string, object> Variables = new();
         private readonly Dictionary<string, Func<object[], object>> Functions = new();
 
+        private int NumAsserts = 0;
+        private int FailedAsserts = 0;
+
         public GScriptVisitor()
         {
             Functions.Add("print", PrintOp);
             Functions.Add("assert", AssertOp);
+            Functions.Add("finalizeAssert", FinalizeAssert);
         }
 
         private object PrintOp(object[] args)
@@ -26,8 +30,18 @@ namespace AntlrLangDev
             {
                 if(!IsTruthy(args[i])){
                     Console.WriteLine($"error, assertion {i} faulty");
+                    FailedAsserts++;
                 }
+                NumAsserts++;
             }
+            return null;
+        }
+
+        private object FinalizeAssert(object[] args){
+            float ratio = 100 - FailedAsserts * 100f / NumAsserts;
+            Console.WriteLine($"result: {NumAsserts - FailedAsserts} / {NumAsserts} ({ratio}% correct)");
+            FailedAsserts = 0;
+            NumAsserts = 0;
             return null;
         }
 

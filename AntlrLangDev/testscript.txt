@@ -12,13 +12,20 @@ assert(-1+2);
 assert(0.001);
 
 a = 4.345;
-assert(a == a);
+assert(a - a < 0.001);
 assert(a != 0);
 assert(a > 0);
 b = a < 0;
-print(b);
-print(!b);
+assert(!b);
 assert(!(b));
 assert(5 >= 5);
 assert(5 <= 5);
 assert(6 > 5);
+
+finalizeAssert();
+
+print("## test maths logic");
+assert(1 + 1 * 2 == 3);
+assert((1+1) * 2 == 4);
+
+finalizeAssert();
