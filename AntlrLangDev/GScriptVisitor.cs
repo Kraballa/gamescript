@@ -410,7 +410,6 @@ namespace AntlrLangDev
 
             var block = context.block();
             NativeFuncts.Add(funcName, new NativeFuncData(block, _params));
-            Console.WriteLine($"defined new function {funcName}");
             return null;
         }
 
