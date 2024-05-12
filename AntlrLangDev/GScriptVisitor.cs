@@ -5,7 +5,7 @@ namespace AntlrLangDev
 {
     internal class GScriptVisitor : GScriptBaseVisitor<object?>
     {
-        public readonly Dictionary<string, object> Variables = new();
+        public readonly StackDict<object> Memory = new();
         private readonly Dictionary<string, Func<object[], object>> Functions = new();
 
         private int NumAsserts = 0;
@@ -26,9 +26,10 @@ namespace AntlrLangDev
 
         private object AssertOp(object[] args)
         {
-            for(int i = 0; i < args.Length; i++)
+            for (int i = 0; i < args.Length; i++)
             {
-                if(!IsTruthy(args[i])){
+                if (!IsTruthy(args[i]))
+                {
                     Console.WriteLine($"error, assertion {i} faulty");
                     FailedAsserts++;
                 }
@@ -37,7 +38,8 @@ namespace AntlrLangDev
             return null;
         }
 
-        private object FinalizeAssert(object[] args){
+        private object FinalizeAssert(object[] args)
+        {
             float ratio = 100 - FailedAsserts * 100f / NumAsserts;
             Console.WriteLine($"result: {NumAsserts - FailedAsserts} / {NumAsserts} ({ratio}% correct)");
             FailedAsserts = 0;
@@ -50,8 +52,9 @@ namespace AntlrLangDev
         {
             string name = context.IDENTIFIER().GetText();
             object? value = Visit(context.expression());
-            Variables[name] = value;
-            //Console.WriteLine($"{name} -> {value}");
+            if (value == null)
+                throw new Exception($"error, variable {name} is null");
+            Memory.Add(name, value);
             return null;
         }
 
@@ -83,11 +86,11 @@ namespace AntlrLangDev
         public override object VisitIdentifierExpression([NotNull] GScriptParser.IdentifierExpressionContext context)
         {
             var varname = context.IDENTIFIER().GetText();
-            if (!Variables.ContainsKey(varname))
+            if (Memory.Get(varname) == null)
             {
                 throw new Exception($"error, variable {varname} not found");
             }
-            return Variables[varname];
+            return Memory[varname];
         }
 
         public override object VisitNegatedExpression([NotNull] GScriptParser.NegatedExpressionContext context)
@@ -345,15 +348,18 @@ namespace AntlrLangDev
 
         public override object VisitWhileBlock([NotNull] GScriptParser.WhileBlockContext context)
         {
+            Memory.EnterBlock();
             while (IsTruthy(Visit(context.expression())))
             {
                 Visit(context.block());
             }
+            Memory.ExitBlock();
             return null;
         }
 
         public override object VisitIfBlock([NotNull] GScriptParser.IfBlockContext context)
         {
+            Memory.EnterBlock();
             if (IsTruthy(Visit(context.expression())))
             {
                 Visit(context.block());
@@ -363,10 +369,11 @@ namespace AntlrLangDev
                 var elifBlock = context.elseIfBlock();
                 if (elifBlock != null)
                 {
+
                     Visit(elifBlock);
                 }
             }
-
+            Memory.ExitBlock();
             return null;
         }
 
