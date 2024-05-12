@@ -27,5 +27,35 @@ finalizeAssert();
 print("## test maths logic");
 assert(1 + 1 * 2 == 3);
 assert((1+1) * 2 == 4);
+assert(6 % 4 == 2);
+assert(6 / 4 == 1);
+
+finalizeAssert();
+
+print("## test control structure logic");
+if(false){
+    assert(false);
+}
+else{assert(true);}
+
+if(!true){
+    assert(false);
+}
+if(0){
+    assert(false);
+}
+else if(false | true & false){
+    assert(false);
+}
+else{
+    assert(true);
+}
+
+finalizeAssert();
+
+print("## test comments");
+assert(true);
+//assert(false);
+i = 0; //assert(false);
 
 finalizeAssert();
