@@ -45,10 +45,10 @@ constant: INTEGER | FLOAT | STRING | BOOL | NULL;
 // lexer
 
 FLOAT
-    : [0-9]+ '.' [0-9]*
+    : [-]?[0-9]+ '.' [0-9]*
     | '.' [0-9]+
     ;
-INTEGER: [0-9]+;
+INTEGER: [-]?[0-9]+;
 STRING: ('"' ~'"'* '"') | ('\'' ~'\''* '\'');
 BOOL: 'true' | 'false';
 NULL: 'null';
