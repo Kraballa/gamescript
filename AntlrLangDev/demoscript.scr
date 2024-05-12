@@ -2,8 +2,8 @@ i = 4;
 j = i + 4;
 k = j * i + 5;
 
-a = true;
-b = !(a | a);
+a = false;
+b = !(a | !a);
 
 while (i > 0){
     i = i - 1;
