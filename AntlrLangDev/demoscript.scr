@@ -1,9 +1,12 @@
 i = 4;
 j = i + 4;
 print(j * i + 5);
-print(5 + j * i);
+print(5 + j * i); //assert(false);
+
+//test
 
 z = 5.5;
+//assert(false);
 y = 24.7;
 
 u = y % z;
