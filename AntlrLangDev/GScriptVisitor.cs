@@ -24,10 +24,7 @@ namespace AntlrLangDev
         {
             for(int i = 0; i < args.Length; i++)
             {
-                if(args[i].GetType() != typeof(bool)){
-                    throw new Exception("error, non-boolean parameter");
-                }
-                if(!(bool)args[i]){
+                if(!IsTruthy(args[i])){
                     Console.WriteLine($"error, assertion {i} faulty");
                 }
             }
@@ -83,9 +80,9 @@ namespace AntlrLangDev
         {
             var value = Visit(context.expression());
 
-            if (value.GetType() == typeof(bool))
+            if (value is bool b)
             {
-                return !(bool)value;
+                return !b;
             }
             throw new Exception($"error, variable of type {value.GetType()} cannot be negated.");
         }
@@ -118,7 +115,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 * (float)res2;
+                        return Convert.ToSingle(res1) * Convert.ToSingle(res2);
                     }
                 case "/":
                     if (isInt)
@@ -127,7 +124,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 / (float)res2;
+                        return Convert.ToSingle(res1) / Convert.ToSingle(res2);
                     }
                 case "%":
                     if (isInt)
@@ -136,7 +133,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 % (float)res2;
+                        return Convert.ToSingle(res1) % Convert.ToSingle(res2);
                     }
             }
             throw new Exception("error, invalid mult operation");
@@ -184,7 +181,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 - (float)res2;
+                        return Convert.ToSingle(res1) - Convert.ToSingle(res2);
                     }
             }
             throw new Exception("error, invalid add operation");
@@ -248,7 +245,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 != (float)res2;
+                        return Convert.ToSingle(res1) != Convert.ToSingle(res2);
                     }
                 case "!=":
                     if (isInt)
@@ -257,7 +254,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 != (float)res2;
+                        return Convert.ToSingle(res1) != Convert.ToSingle(res2);
                     }
                 case ">":
                     if (isInt)
@@ -266,7 +263,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 > (float)res2;
+                        return Convert.ToSingle(res1) > Convert.ToSingle(res2);
                     }
                 case "<":
                     if (isInt)
@@ -275,7 +272,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 < (float)res2;
+                        return Convert.ToSingle(res1) < Convert.ToSingle(res2);
                     }
                 case ">=":
                     if (isInt)
@@ -284,7 +281,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 >= (float)res2;
+                        return Convert.ToSingle(res1) >= Convert.ToSingle(res2);
                     }
                 case "<=":
                     if (isInt)
@@ -293,7 +290,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 <= (float)res2;
+                        return Convert.ToSingle(res1) <= Convert.ToSingle(res2);
                     }
             }
             throw new Exception($"error, unknown operation {op}");

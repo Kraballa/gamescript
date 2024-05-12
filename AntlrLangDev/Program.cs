@@ -9,8 +9,12 @@ class Program
     {
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 
-        string filename = "demoscript.scr";
-        string content = File.ReadAllText(filename);
+        RunScript("testscript.txt");
+    }
+
+    private static void RunScript(string path)
+    {
+        string content = File.ReadAllText(path);
 
         var inputStream = new AntlrInputStream(content);
 
