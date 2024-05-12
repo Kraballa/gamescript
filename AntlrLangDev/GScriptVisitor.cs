@@ -409,7 +409,7 @@ namespace AntlrLangDev
             }
 
             var block = context.block();
-            NativeFuncts.Add(funcName, new NativeFuncData(block, _params));
+            NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params));
             return null;
         }
 
