@@ -69,12 +69,10 @@ internal class StackDict<TValue>
     public void EnterBlock()
     {
         VariableStack.Push(new Dictionary<string, TValue>());
-        Console.WriteLine($"stacksize: {VariableStack.Count}");
     }
 
     public void ExitBlock()
     {
         VariableStack.Pop();
-        Console.WriteLine($"stacksize: {VariableStack.Count}");
     }
 }
