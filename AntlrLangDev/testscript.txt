@@ -89,7 +89,10 @@ function testFunc(_test){
 testFunc("Hello, Functions!");
 
 i = 0;
-while(i < 10){
+while(i < 10000){
     i = i + 1;
-    print(rand());
+    result = (int)(rand() * 10);
+    if(result == 0){
+        print("rolled 0");
+    }
 }

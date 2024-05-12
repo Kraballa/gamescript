@@ -75,6 +75,33 @@ namespace AntlrLangDev
             return Memory[varname];
         }
 
+        public override object VisitTypecastExpression([NotNull] GScriptParser.TypecastExpressionContext context)
+        {
+            string targetType = context.type().GetText();
+            object var = Visit(context.expression());
+            Type varType = var.GetType();
+
+            if (targetType == "string")
+            {
+                return var.ToString();
+            }
+            if (targetType == "bool")
+            {
+                return IsTruthy(var);
+            }
+            if (targetType == "float")
+            {
+                if (varType == typeof(float)) return var;
+                if (varType == typeof(int)) return (int)(float)var;
+            }
+            else if (targetType == "int")
+            {
+                if (varType == typeof(float)) return (int)(float)var;
+                if (varType == typeof(int)) return var;
+            }
+            throw new Exception($"error, conversion from {varType} to {targetType} not supported");
+        }
+
         public override object VisitNegatedExpression([NotNull] GScriptParser.NegatedExpressionContext context)
         {
             var value = Visit(context.expression());

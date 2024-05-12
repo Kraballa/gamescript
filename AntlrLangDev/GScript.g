@@ -2,7 +2,12 @@ grammar GScript;
 
 program: line+ EOF;
 
-line: statement | ifBlock | whileBlock | block | functionDefinition;
+line:
+    statement
+    | ifBlock
+    | whileBlock
+    | block
+    | functionDefinition;
 
 statement: (assignment | functionCall) ';';
 
@@ -27,6 +32,7 @@ expression:
     | IDENTIFIER                      # identifierExpression
     | functionCall                    # functionCallExpression
     | '(' expression ')'              # enclosedExpression
+    | '(' type ')' expression         # typecastExpression
     | '!' expression                  # negatedExpression
     | expression multOp expression    # multExpression
     | expression addOp expression     # addExpression
@@ -34,6 +40,7 @@ expression:
     | expression andOp expression     # andExpression
     | expression orOp expression      # orExpression;
 
+type: 'int' | 'float' | 'string' | 'bool';
 multOp: '*' | '/' | '%';
 addOp: '+' | '-';
 compareOp: '==' | '!=' | '>' | '<' | '>=' | '<=';
@@ -53,4 +60,4 @@ NULL: 'null';
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 
 WS: [ \t\r\n]+ -> skip;
-COMMENT : '//' ~[\n]+  -> skip;
+COMMENT: '//' ~[\n]+ -> skip;
