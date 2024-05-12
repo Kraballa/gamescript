@@ -3,19 +3,19 @@ using Antlr4.Runtime.Misc;
 
 namespace AntlrLangDev
 {
+
     internal class GScriptVisitor : GScriptBaseVisitor<object?>
     {
         public readonly StackDict<object> Memory = new();
-        private readonly Dictionary<string, Func<object[], object>> Functions = new();
+        private readonly Dictionary<string, Func<object[], object>> ExternalFuncts = new();
+        private readonly Dictionary<string, NativeFuncData> NativeFuncts = new();
 
         private int NumAsserts = 0;
         private int FailedAsserts = 0;
 
         public GScriptVisitor()
         {
-            Functions.Add("print", PrintOp);
-            Functions.Add("assert", AssertOp);
-            Functions.Add("finalizeAssert", FinalizeAssert);
+            ExternalFuncts.Add("print", PrintOp);
         }
 
         private object PrintOp(object[] args)
@@ -101,7 +101,7 @@ namespace AntlrLangDev
             {
                 return !b;
             }
-            throw new Exception($"error, variable of type {value.GetType()} cannot be negated.");
+            throw new Exception($"error, variable of type {value.GetType()} cannot be bool-negated.");
         }
 
         public override object VisitMultExpression([NotNull] GScriptParser.MultExpressionContext context)
@@ -377,14 +377,54 @@ namespace AntlrLangDev
             return null;
         }
 
+        public override object VisitFunctionDefinition([NotNull] GScriptParser.FunctionDefinitionContext context)
+        {
+            var idtfs = context.IDENTIFIER();
+            string funcName = idtfs[0].GetText();
+
+            if (NativeFuncts.ContainsKey(funcName) || ExternalFuncts.ContainsKey(funcName))
+            {
+                throw new Exception($"error, function name {funcName} already in use");
+            }
+
+            string[] _params = new string[idtfs.Length - 1];
+
+            for (int i = 1; i < idtfs.Length; i++)
+            {
+                string identifier = idtfs[i].GetText();
+                if (Memory.ContainsKey(identifier))
+                {
+                    throw new Exception($"error, parameter identifier {identifier} already in use");
+                }
+                _params[i - 1] = identifier;
+            }
+
+            var block = context.block();
+            NativeFuncts.Add(funcName, new NativeFuncData(block, _params));
+            Console.WriteLine($"defined new function {funcName}");
+            return null;
+        }
+
         public override object VisitFunctionCall([NotNull] GScriptParser.FunctionCallContext context)
         {
             var ident = context.IDENTIFIER().GetText();
-            if (!Functions.ContainsKey(ident))
+            if (ExternalFuncts.ContainsKey(ident))
             {
-                throw new Exception($"error, function {ident} not found.");
+                return RunExternalFunction(context);
             }
+            else if (NativeFuncts.ContainsKey(ident))
+            {
+                Memory.EnterBlock();
+                var ret = RunNativeFunction(context);
+                Memory.ExitBlock();
+                return ret;
+            }
+            throw new Exception($"error, function {ident} not found.");
+        }
 
+        private object RunExternalFunction(GScriptParser.FunctionCallContext context)
+        {
+            var ident = context.IDENTIFIER().GetText();
             int numExpr = (context.children.Count - 2) / 2;
             object[] _params = new object[numExpr];
             for (int i = 0; i < _params.Length; i++)
@@ -395,7 +435,24 @@ namespace AntlrLangDev
                 _params[i] = (object)ret;
             }
 
-            return Functions[ident].Invoke(_params);
+            return ExternalFuncts[ident].Invoke(_params);
+        }
+
+        private object RunNativeFunction(GScriptParser.FunctionCallContext context)
+        {
+            var ident = context.IDENTIFIER().GetText();
+            var expressions = context.expression();
+            NativeFuncData funcData = NativeFuncts[ident];
+
+            for(int i = 0; i < funcData.ParamNames.Length; i++){
+                if(Memory.ContainsKey(funcData.ParamNames[i])){
+                    throw new Exception($"error, cannot reuse existing variable name {funcData.ParamNames[i]} (sorry it's a bit scuffed)");
+                }
+                var value = Visit(expressions[i]);
+                Memory.Add(funcData.ParamNames[i], value);
+            }
+
+            return Visit(funcData.Block);
         }
 
         private bool IsTruthy(object? value)

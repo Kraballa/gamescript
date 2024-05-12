@@ -2,7 +2,7 @@ grammar GScript;
 
 program: line+ EOF;
 
-line: statement | ifBlock | whileBlock | block;
+line: statement | ifBlock | whileBlock | block | functionDefinition;
 
 statement: (assignment | functionCall) ';';
 
@@ -15,6 +15,9 @@ whileBlock: 'while' '(' expression ')' block;
 block: '{' line* '}';
 
 assignment: IDENTIFIER '=' expression;
+
+functionDefinition:
+    'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' block;
 
 functionCall:
     IDENTIFIER '(' (expression (',' expression)*)? ')';

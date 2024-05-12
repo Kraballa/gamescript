@@ -1,5 +1,27 @@
 print("# TESTSCRIPT");
 
+numAsserts = 0;
+numFailures = 0;
+
+function assert(_obj){
+    numAsserts = numAsserts + 1;
+    if(_obj){
+        
+    }
+    else{
+        numFailures = numFailures + 1;
+    }
+}
+
+function finalizeAssert(){
+    ratio = 100 - 100.0 * numFailures / numAsserts;
+    str = "result: " + (numAsserts - numFailures) + " / " + numAsserts + "(" + ratio + "% correct)";
+    print(str);
+
+    numAsserts = 0;
+    numFailures = 0;
+}
+
 print("## test boolean logic");
 assert(true);
 assert(!false);
@@ -59,3 +81,9 @@ assert(true);
 i = 0; //assert(false);
 
 finalizeAssert();
+
+function testFunc(_test){
+    print(_test);
+}
+
+testFunc("Hello, Functions!");
