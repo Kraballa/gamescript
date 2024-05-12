@@ -118,7 +118,7 @@ namespace AntlrLangDev
         public override object VisitAddExpression([NotNull] GScriptParser.AddExpressionContext context)
         {
             var expressions = context.expression();
-            var op = context.addOp();
+            var op = context.addOp().GetText();
 
             var res1 = Visit(expressions[0]);
             var res2 = Visit(expressions[1]);
@@ -132,14 +132,14 @@ namespace AntlrLangDev
             var type2 = res2.GetType();
 
             //string concatenation
-            if (op.GetText() == "+" && (type1 == typeof(string) || type2 == typeof(string)))
+            if (op == "+" && (type1 == typeof(string) || type2 == typeof(string)))
             {
                 return res1.ToString() + res2.ToString();
             }
 
             bool isInt = type1 == typeof(int) && type2 == typeof(int);
 
-            switch (op.GetText())
+            switch (op)
             {
                 case "+":
                     if (isInt)
@@ -148,7 +148,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)res1 + (float)res2;
+                        return (float)((double)res1 + (double)res2);
                     }
                 case "-":
                     if (isInt)
@@ -161,6 +161,115 @@ namespace AntlrLangDev
                     }
             }
             throw new Exception("error, invalid add operation");
+        }
+
+        public override object VisitCompareExpression([NotNull] GScriptParser.CompareExpressionContext context)
+        {
+            var expressions = context.expression();
+
+            var res1 = Visit(expressions[0]);
+            var res2 = Visit(expressions[1]);
+
+            var type1 = res1.GetType();
+            var type2 = res2.GetType();
+
+            if (type1 == null || type2 == null)
+            {
+                throw new Exception("error, compare operation not defined for null type");
+            }
+
+            var op = context.compareOp().GetText();
+
+            if (type1 == typeof(string) || type2 == typeof(string))
+            {
+                if (type1 != typeof(string) || type2 != typeof(string))
+                {
+                    throw new Exception("error, can't compare string to non-string");
+                }
+                switch (op)
+                {
+                    case "==":
+                        return (string)res1 == (string)res2;
+                    case "!=":
+                        return (string)res1 != (string)res2;
+                    default:
+                        throw new Exception($"error, invalid operation for string comparison: {op}");
+                }
+            }
+
+            if (type1 == typeof(bool) || type2 == typeof(bool))
+            {
+                switch (op)
+                {
+                    case "==":
+                        return IsTruthy(res1) == IsTruthy(res2);
+                    case "!=":
+                        return IsTruthy(res1) != IsTruthy(res2);
+                    default:
+                        throw new Exception($"error, invalid operation for bool-ish comparison: {op}");
+                }
+            }
+
+            bool isInt = type1 == typeof(int) && type2 == typeof(int);
+
+            switch (op)
+            {
+                case "==":
+                    if (isInt)
+                    {
+                        return (int)res1 == (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 != (float)res2;
+                    }
+                case "!=":
+                    if (isInt)
+                    {
+                        return (int)res1 != (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 != (float)res2;
+                    }
+                    case ">":
+                    if (isInt)
+                    {
+                        return (int)res1 > (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 > (float)res2;
+                    }
+                case "<":
+                    if (isInt)
+                    {
+                        return (int)res1 < (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 < (float)res2;
+                    }
+                    case ">=":
+                    if (isInt)
+                    {
+                        return (int)res1 >= (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 >= (float)res2;
+                    }
+                case "<=":
+                    if (isInt)
+                    {
+                        return (int)res1 <= (int)res2;
+                    }
+                    else
+                    {
+                        return (float)res1 <= (float)res2;
+                    }
+            }
+            throw new Exception($"error, unknown operation {op}");
         }
 
         public override object VisitBoolExpression([NotNull] GScriptParser.BoolExpressionContext context)
@@ -210,7 +319,7 @@ namespace AntlrLangDev
             else
             {
                 var elifBlock = context.elseIfBlock();
-                if (!elifBlock.IsEmpty)
+                if (elifBlock != null)
                 {
                     Visit(elifBlock);
                 }
@@ -227,11 +336,11 @@ namespace AntlrLangDev
             }
             if (value is int i)
             {
-                return i != 0;
+                return i > 0;
             }
             if (value is float f)
             {
-                return f != 0f;
+                return f > 0f;
             }
 
             throw new Exception($"error, can't decide truthiness of value {value}");
