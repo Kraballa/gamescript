@@ -1,23 +1,36 @@
 i = 4;
 j = i + 4;
-k = j * i + 5;
+print(j * i + 5);
+print(5 + j * i);
 
 z = 5.5;
 y = 24.7;
 
 u = y % z;
-
 a = false;
 b = (a | !a);
 
-while(i > -3) {
+c = (true | false) & (true & true);
+assert(c);
+
+c = c & (true & (false & true));
+assert(!c);
+
+c = true | false & false;
+assert(c, true);
+
+print(b);
+
+print("peepo happy");
+
+while(i > 2) {
     i = i - 1;
     name = "Hello John";
     out = i + ": " + name;
     print(out);
 }
 
-if(i > 343){
+if(i > -343){
     print(i);
 }
 

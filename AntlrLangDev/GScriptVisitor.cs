@@ -1,22 +1,36 @@
 ﻿
-using System.Linq.Expressions;
 using Antlr4.Runtime.Misc;
 
 namespace AntlrLangDev
 {
     internal class GScriptVisitor : GScriptBaseVisitor<object?>
     {
-        private readonly Dictionary<string, object> Variables = new();
+        public readonly Dictionary<string, object> Variables = new();
         private readonly Dictionary<string, Func<object[], object>> Functions = new();
 
         public GScriptVisitor()
         {
             Functions.Add("print", PrintOp);
+            Functions.Add("assert", AssertOp);
         }
 
         private object PrintOp(object[] args)
         {
             Console.WriteLine(args[0].ToString());
+            return null;
+        }
+
+        private object AssertOp(object[] args)
+        {
+            for(int i = 0; i < args.Length; i++)
+            {
+                if(args[i].GetType() != typeof(bool)){
+                    throw new Exception("error, non-boolean parameter");
+                }
+                if(!(bool)args[i]){
+                    Console.WriteLine($"error, assertion {i} faulty");
+                }
+            }
             return null;
         }
 
@@ -285,10 +299,9 @@ namespace AntlrLangDev
             throw new Exception($"error, unknown operation {op}");
         }
 
-        public override object VisitBoolExpression([NotNull] GScriptParser.BoolExpressionContext context)
+        public override object VisitAndExpression([NotNull] GScriptParser.AndExpressionContext context)
         {
             var expressions = context.expression();
-            var op = context.boolOp();
 
             var res1 = Visit(expressions[0]);
             var res2 = Visit(expressions[1]);
@@ -297,16 +310,21 @@ namespace AntlrLangDev
             {
                 throw new Exception("error, non-boolean value used for bool operator");
             }
+            return (bool)res1 & (bool)res2;
+        }
 
-            switch (op.GetText())
+        public override object VisitOrExpression([NotNull] GScriptParser.OrExpressionContext context)
+        {
+            var expressions = context.expression();
+
+            var res1 = Visit(expressions[0]);
+            var res2 = Visit(expressions[1]);
+
+            if (res1.GetType() != typeof(bool) || res2.GetType() != typeof(bool))
             {
-                case "&":
-                    return (bool)res1 & (bool)res2;
-                case "|":
-                    return (bool)res1 | (bool)res2;
+                throw new Exception("error, non-boolean value used for bool operator");
             }
-
-            throw new Exception("error, invalid bool operation");
+            return (bool)res1 | (bool)res2;
         }
 
         public override object VisitEnclosedExpression([NotNull] GScriptParser.EnclosedExpressionContext context)
@@ -359,8 +377,7 @@ namespace AntlrLangDev
                 _params[i] = (object)ret;
             }
 
-            Functions[ident].Invoke(_params);
-            return null;
+            return Functions[ident].Invoke(_params);
         }
 
         private bool IsTruthy(object? value)
