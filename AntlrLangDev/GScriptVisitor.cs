@@ -13,7 +13,7 @@ namespace AntlrLangDev
             string name = context.IDENTIFIER().GetText();
             object? value = Visit(context.expression());
             Variables[name] = value;
-
+            Console.WriteLine($"{name} -> {value}");
             return null;
         }
 

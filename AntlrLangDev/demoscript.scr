@@ -2,14 +2,19 @@ i = 4;
 j = i + 4;
 k = j * i + 5;
 
-a = false;
-b = !(a | !a);
+z = 5.5;
+y = 24.7;
 
-while (i > 0){
+u = y % z;
+
+a = false;
+b = (a | !a);
+
+while(i > 0) {
     i = i - 1;
     name = "Hello John";
-    print(i + ": " + name);
-    print("bingus");
+    out = i + ": " + name;
+    print(out);
 }
 
 if(i > 0) {
