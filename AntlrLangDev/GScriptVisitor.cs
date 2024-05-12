@@ -452,6 +452,10 @@ namespace AntlrLangDev
             var expressions = context.expression();
             NativeFuncData funcData = NativeFuncts[ident];
 
+            if(expressions.Length != funcData.ParamNames.Length){
+                throw new Exception($"error, expected {funcData.ParamNames.Length} parameter(s) but got {expressions.Length}");
+            }
+
             for (int i = 0; i < funcData.ParamNames.Length; i++)
             {
                 if (Memory.ContainsKey(funcData.ParamNames[i]))
