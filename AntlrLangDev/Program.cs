@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime;
+﻿using System.Globalization;
+using Antlr4.Runtime;
 
 namespace AntlrLangDev;
 
@@ -6,6 +7,8 @@ class Program
 {
     public static void Main(string[] args)
     {
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+
         string filename = "demoscript.scr";
         string content = File.ReadAllText(filename);
 
@@ -17,6 +20,5 @@ class Program
         var context = parser.program();
         var visitor = new GScriptVisitor();
         visitor.Visit(context);
-
     }
 }
