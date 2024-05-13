@@ -19,7 +19,7 @@ whileBlock: 'while' '(' expression ')' block;
 
 block: '{' line* '}';
 
-assignment: IDENTIFIER '=' expression;
+assignment: (scope '.')? IDENTIFIER '=' expression;
 
 functionDefinition:
     'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' block;
@@ -29,7 +29,7 @@ functionCall:
 
 expression:
     constant                          # constantExpression
-    | IDENTIFIER                      # identifierExpression
+    | (scope '.')? IDENTIFIER         # identifierExpression
     | functionCall                    # functionCallExpression
     | '(' expression ')'              # enclosedExpression
     | expression '|' type             # typecastExpression
@@ -40,6 +40,7 @@ expression:
     | expression andOp expression     # andExpression
     | expression orOp expression      # orExpression;
 
+scope: 'local';
 type: 'int' | 'float' | 'string' | 'bool';
 multOp: '*' | '/' | '%';
 addOp: '+' | '-';

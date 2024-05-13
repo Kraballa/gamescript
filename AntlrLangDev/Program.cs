@@ -24,5 +24,11 @@ class Program
         var context = parser.program();
         var visitor = new GScriptVisitor();
         visitor.Visit(context);
+
+        void RunScript(string path){
+
+        }
+
+        RunScript("");
     }
 }

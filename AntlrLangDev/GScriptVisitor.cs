@@ -11,6 +11,7 @@ namespace AntlrLangDev
 
         private readonly Dictionary<string, Func<object[], object>> ExternalFuncts = new();
         private readonly StackDict<NativeFuncData> NativeFuncts = new();
+        private readonly StackDict<object> ParamMemory = new();
 
         private Random rand = new Random();
 
@@ -69,11 +70,26 @@ namespace AntlrLangDev
         public override object VisitIdentifierExpression([NotNull] GScriptParser.IdentifierExpressionContext context)
         {
             var varname = context.IDENTIFIER().GetText();
-            if (Memory.Get(varname) == null)
+            var scope = context.scope();
+            if (scope != null && scope.GetText() == "local")
             {
-                throw new Exception($"error, variable {varname} not found");
+                if (Memory.ContainsKey(varname))
+                {
+                    return Memory[varname];
+                }
             }
-            return Memory[varname];
+            else
+            {
+                if (ParamMemory.ContainsKey(varname))
+                {
+                    return ParamMemory[varname];
+                }
+                else if (Memory.ContainsKey(varname))
+                {
+                    return Memory[varname];
+                }
+            }
+            throw new Exception($"error, variable {varname} not found");
         }
 
         public override object VisitTypecastExpression([NotNull] GScriptParser.TypecastExpressionContext context)
@@ -396,21 +412,16 @@ namespace AntlrLangDev
             var idtfs = context.IDENTIFIER();
             string funcName = idtfs[0].GetText();
 
-            if (NativeFuncts.ContainsKey(funcName) || ExternalFuncts.ContainsKey(funcName))
+            if (ExternalFuncts.ContainsKey(funcName))
             {
-                throw new Exception($"error, function name {funcName} already in use");
+                throw new Exception($"error, can't reuse external function name '{funcName}'");
             }
 
             string[] _params = new string[idtfs.Length - 1];
 
             for (int i = 1; i < idtfs.Length; i++)
             {
-                string identifier = idtfs[i].GetText();
-                if (Memory.ContainsKey(identifier))
-                {
-                    throw new Exception($"error, parameter identifier {identifier} already in use");
-                }
-                _params[i - 1] = identifier;
+                _params[i - 1] = idtfs[i].GetText();
             }
 
             var block = context.block();
@@ -429,9 +440,11 @@ namespace AntlrLangDev
             {
                 Memory.EnterBlock();
                 NativeFuncts.EnterBlock();
+                ParamMemory.EnterBlock();
                 var ret = RunNativeFunction(context);
                 Memory.ExitBlock();
                 NativeFuncts.ExitBlock();
+                ParamMemory.ExitBlock();
                 return ret;
             }
             throw new Exception($"error, function {ident} not found.");
@@ -459,18 +472,15 @@ namespace AntlrLangDev
             var expressions = context.expression();
             NativeFuncData funcData = NativeFuncts[ident];
 
-            if(expressions.Length != funcData.ParamNames.Length){
+            if (expressions.Length != funcData.ParamNames.Length)
+            {
                 throw new Exception($"error, expected {funcData.ParamNames.Length} parameter(s) but got {expressions.Length}");
             }
 
             for (int i = 0; i < funcData.ParamNames.Length; i++)
             {
-                if (Memory.ContainsKey(funcData.ParamNames[i]))
-                {
-                    throw new Exception($"error, cannot reuse existing variable name {funcData.ParamNames[i]} (sorry it's a bit scuffed)");
-                }
                 var value = Visit(expressions[i]);
-                Memory.Add(funcData.ParamNames[i], value);
+                ParamMemory.Add(funcData.ParamNames[i], value);
             }
 
             return Visit(funcData.Block);

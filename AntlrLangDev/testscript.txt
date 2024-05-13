@@ -1,15 +1,18 @@
 print("# TESTSCRIPT");
 
+totalAsserts = 0;
+totalFailures = 0;
+
 numAsserts = 0;
 numFailures = 0;
 
 function assert(_obj){
     numAsserts = numAsserts + 1;
-    if(_obj){
-        
-    }
-    else{
+    totalAsserts = totalAsserts + 1;
+    if(!_obj|bool){
+        print("assertion failed");
         numFailures = numFailures + 1;
+        totalFailures = totalFailures + 1;
     }
 }
 
@@ -20,6 +23,14 @@ function finalizeAssert(){
 
     numAsserts = 0;
     numFailures = 0;
+}
+
+function concludeTests(){
+    print("-----------------------------------
+combined test results:");
+    ratio = 100 - 100.0 * totalFailures / totalAsserts;
+    str = "result: " + (totalAsserts - totalFailures) + " / " + totalAsserts + " (" + ratio + "% correct)";
+    print(str);
 }
 
 print("## test boolean logic");
@@ -82,31 +93,78 @@ i = 0; //assert(false);
 
 finalizeAssert();
 
-function testFunc(_test){
-    print(_test);
-}
+print("## test functions");
 
-testFunc("Hello, Functions!");
-
-print((rand() * 10)|int);
-
-print(10.4|int > 10);
-print(10.9|int);
+assert(10.4|int == 10);
+assert(10.9|int == 10); 
 
 function test(_str){
-    print(_str);
+    i = 10
 
     function test2(_str2){
-        print(_str2);
+        i = i * 2;
     }
+    test2("test");
+    assert(i == 20);
 
-    test2("test2 inside test 1");
+    function test3(){
+        assert(false);
+    }
 }
 
 test("test1");
 
-function test2(_str){
-    print(_str);
+function test3(){
+    assert(true);
 }
+test3();
 
-test2("2nd test2 definition but previous scope exited");
+//test parameter scoping
+val = 10;
+toAdd = 5;
+function add(val){
+    assert(val == 5);
+    assert(local.val == 10);
+    local.val = local.val + val;
+    assert(local.val == 15);
+}
+add(toAdd);
+assert(val == 15);
+
+test = 0;
+test2 = 1;
+function testA(test){
+    assert(test == test2);
+    assert(local.test == 0);
+    function testB(test){} //invalid parameter name, param type identifier with name 'param' already exists
+}
+testA(test2);
+
+finalizeAssert();
+
+print("## hardcore function overwriting, parameter nesting stress test");
+num = 5;
+function test(num){
+    assert(num == 1);
+    function test2(num){
+        assert(num == 2);
+    }
+    test2(2);
+
+    function test(num){
+        assert(num == 3);
+    }
+
+    test(3);
+
+    function test(num){
+        assert(num == 4);
+        assert(local.num == 5);
+    }
+    test(4);
+}
+test(1);
+
+finalizeAssert();
+
+concludeTests();
