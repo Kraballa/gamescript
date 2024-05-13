@@ -122,10 +122,10 @@ namespace AntlrLangDev
         public override object VisitNegatedExpression([NotNull] GScriptParser.NegatedExpressionContext context)
         {
             var value = Visit(context.expression());
-
-            if (value is bool b)
+            bool? logicValue = IsTruthy(value);
+            if (logicValue != null)
             {
-                return !b;
+                return !logicValue;
             }
             throw new Exception($"error, variable of type {value.GetType()} cannot be bool-negated.");
         }
@@ -501,7 +501,7 @@ namespace AntlrLangDev
                 return f > 0f;
             }
 
-            throw new Exception($"error, can't decide truthiness of value {value}");
+            throw new Exception($"error, can't decide truthiness of value {value} (type {value.GetType()})");
         }
     }
 }
