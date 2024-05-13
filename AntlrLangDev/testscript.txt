@@ -33,6 +33,13 @@ combined test results:");
     print(str);
 }
 
+test = 0;
+function a(test){
+    test = 10;
+}
+assert(test == 0);
+
+
 print("## test boolean logic");
 assert(true);
 assert(!false);
@@ -54,6 +61,10 @@ assert(!(b));
 assert(5 >= 5);
 assert(5 <= 5);
 assert(6 > 5);
+
+t = 5;
+assert(!t == false);
+assert(!!t == true);
 
 finalizeAssert();
 
@@ -124,9 +135,9 @@ val = 10;
 toAdd = 5;
 function add(val){
     assert(val == 5);
-    assert(local.val == 10);
-    local.val = local.val + val;
-    assert(local.val == 15);
+    assert(global.val == 10);
+    global.val = global.val + val;
+    assert(global.val == 15);
 }
 add(toAdd);
 assert(val == 15);
@@ -134,46 +145,47 @@ assert(val == 15);
 test = 0;
 function testA(test){
     assert(test == 1);
-    assert(local.test == 0);
+    assert(global.test == 0);
 
     function testB(test){
         assert(test == 2);
-        assert(local.test == 0);
+        assert(global.test == 0);
     }
     testB(2);
 }
 testA(1);
 
-finalizeAssert();
 
 print("## hardcore function overwriting, parameter nesting stress test");
-num = 5;
-function test(num){
-    assert(num == 1);
-    function test2(num){
-        assert(num == 2);
-    }
-    test2(2);
 
-    function test(num){
-        assert(num == 3);
-    }
+xyz = 0;
 
-    test(3);
-
-    function test(num){
-        assert(num == 4);
-        assert(local.num == 5);
-    }
-    test(4);
+function aTest(){
+    assert(false);
+    xyz = 1;
+    print("aaa");
 }
-test(1);
 
-var = 5;
-print(var);
-print(!var);
-print(!!var);
+function bTest(){
+    function aTest(){
+        assert(true);
+        xyz = 2;
+        print("bbb");
+
+        function aTest(){
+            xyz = 3;
+        }
+        aTest();
+    }
+    aTest();
+}   
+
+bTest();
+assert(xyz == 3);
+print(xyz);
+
 
 finalizeAssert();
-
 concludeTests();
+
+print((rand() * 10) | int);

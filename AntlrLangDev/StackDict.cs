@@ -65,6 +65,10 @@ internal class StackDict<TValue>
 
         VariableStack.Peek()[identifier] = value;
     }
+    
+    public Dictionary<string, TValue> Peek(){
+        return VariableStack.Peek();
+    }
 
     public void EnterBlock()
     {

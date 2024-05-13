@@ -40,7 +40,7 @@ expression:
     | expression andOp expression     # andExpression
     | expression orOp expression      # orExpression;
 
-scope: 'local';
+scope: 'global';
 type: 'int' | 'float' | 'string' | 'bool';
 multOp: '*' | '/' | '%';
 addOp: '+' | '-';

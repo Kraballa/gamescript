@@ -71,7 +71,7 @@ namespace AntlrLangDev
         {
             var varname = context.IDENTIFIER().GetText();
             var scope = context.scope();
-            if (scope != null && scope.GetText() == "local")
+            if (scope != null && scope.GetText() == "global")
             {
                 if (Memory.ContainsKey(varname))
                 {
@@ -415,6 +415,9 @@ namespace AntlrLangDev
             if (ExternalFuncts.ContainsKey(funcName))
             {
                 throw new Exception($"error, can't reuse external function name '{funcName}'");
+            }
+            if(NativeFuncts.Peek().ContainsKey(funcName)){
+                throw new Exception($"error, function '{funcName}' already defined in this scope.");
             }
 
             string[] _params = new string[idtfs.Length - 1];
