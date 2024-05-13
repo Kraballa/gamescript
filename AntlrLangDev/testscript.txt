@@ -136,7 +136,13 @@ test2 = 1;
 function testA(test){
     assert(test == test2);
     assert(local.test == 0);
-    function testB(test){} //invalid parameter name, param type identifier with name 'param' already exists
+
+    //like in c# this function definition is legal and the outer 'test' is not accessible inside 'testB'. the outmost 'test' can be accessed through 'local.test' 
+    function testB(test){
+        assert(test == 2);
+        assert(local.test == 0);
+    }
+    testB(2);
 }
 testA(test2);
 
