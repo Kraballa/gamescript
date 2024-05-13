@@ -92,3 +92,21 @@ print((rand() * 10)|int);
 
 print(10.4|int > 10);
 print(10.9|int);
+
+function test(_str){
+    print(_str);
+
+    function test2(_str2){
+        print(_str2);
+    }
+
+    test2("test2 inside test 1");
+}
+
+test("test1");
+
+function test2(_str){
+    print(_str);
+}
+
+test2("2nd test2 definition but previous scope exited");

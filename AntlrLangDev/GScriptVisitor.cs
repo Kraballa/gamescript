@@ -8,8 +8,9 @@ namespace AntlrLangDev
     {
 
         public readonly StackDict<object> Memory = new();
+
         private readonly Dictionary<string, Func<object[], object>> ExternalFuncts = new();
-        private readonly Dictionary<string, NativeFuncData> NativeFuncts = new();
+        private readonly StackDict<NativeFuncData> NativeFuncts = new();
 
         private Random rand = new Random();
 
@@ -358,17 +359,20 @@ namespace AntlrLangDev
         public override object VisitWhileBlock([NotNull] GScriptParser.WhileBlockContext context)
         {
             Memory.EnterBlock();
+            NativeFuncts.EnterBlock();
             while (IsTruthy(Visit(context.expression())))
             {
                 Visit(context.block());
             }
             Memory.ExitBlock();
+            NativeFuncts.ExitBlock();
             return null;
         }
 
         public override object VisitIfBlock([NotNull] GScriptParser.IfBlockContext context)
         {
             Memory.EnterBlock();
+            NativeFuncts.EnterBlock();
             if (IsTruthy(Visit(context.expression())))
             {
                 Visit(context.block());
@@ -383,6 +387,7 @@ namespace AntlrLangDev
                 }
             }
             Memory.ExitBlock();
+            NativeFuncts.ExitBlock();
             return null;
         }
 
@@ -423,8 +428,10 @@ namespace AntlrLangDev
             else if (NativeFuncts.ContainsKey(ident))
             {
                 Memory.EnterBlock();
+                NativeFuncts.EnterBlock();
                 var ret = RunNativeFunction(context);
                 Memory.ExitBlock();
+                NativeFuncts.ExitBlock();
                 return ret;
             }
             throw new Exception($"error, function {ident} not found.");
