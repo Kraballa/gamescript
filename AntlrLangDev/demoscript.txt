@@ -10,4 +10,3 @@ function test(var){
     global.xyz = 3;
 }
 test(0);
-print(xyz);

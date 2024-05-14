@@ -15,7 +15,7 @@ class Program
         }
         else
         {
-            RunScript("demoscript.txt");
+            RunScript("testscript.txt");
         }
     }
 
@@ -28,6 +28,7 @@ class Program
         var lexer = new GScriptLexer(inputStream);
         var tokenStream = new CommonTokenStream(lexer);
         var parser = new GScriptParser(tokenStream);
+        parser.AddErrorListener(new GScriptErrorListener());
         var context = parser.program();
         var visitor = new GScriptVisitor();
         visitor.Visit(context);

@@ -383,17 +383,22 @@ namespace AntlrLangDev
 
             if (res1.GetType() != typeof(bool) || res2.GetType() != typeof(bool))
             {
-                throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator");
+                throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator.");
             }
             return (bool)res1 | (bool)res2;
         }
 
         public override object VisitEnclosedExpression([NotNull] GScriptParser.EnclosedExpressionContext context)
         {
-            return Visit(context.expression());
+            object? res = Visit(context.expression());
+            if(res == null){
+                throw new Exception($"(line {context.Start.Line}) error, enclosed expression evaluated to null.");
+            }
+
+            return res;
         }
 
-        public override object VisitWhileBlock([NotNull] GScriptParser.WhileBlockContext context)
+        public override object? VisitWhileBlock([NotNull] GScriptParser.WhileBlockContext context)
         {
             Memory.EnterBlock();
             NativeFuncts.EnterBlock();
@@ -406,7 +411,7 @@ namespace AntlrLangDev
             return null;
         }
 
-        public override object VisitIfBlock([NotNull] GScriptParser.IfBlockContext context)
+        public override object? VisitIfBlock([NotNull] GScriptParser.IfBlockContext context)
         {
             Memory.EnterBlock();
             NativeFuncts.EnterBlock();
@@ -454,7 +459,7 @@ namespace AntlrLangDev
             return null;
         }
 
-        public override object VisitFunctionCall([NotNull] GScriptParser.FunctionCallContext context)
+        public override object? VisitFunctionCall([NotNull] GScriptParser.FunctionCallContext context)
         {
             var ident = context.IDENTIFIER().GetText();
             if (ExternalFuncts.ContainsKey(ident))
@@ -484,14 +489,14 @@ namespace AntlrLangDev
             {
                 object? ret = Visit(context.children[i * 2 + 2]);
                 if (ret == null)
-                    throw new Exception($"(line {context.Start.Line}) error, parameter at index {i} evaluated to null");
+                    throw new Exception($"(line {context.Start.Line}) error, parameter at index {i} evaluated to null.");
                 _params[i] = (object)ret;
             }
 
             return ExternalFuncts[ident].Invoke(_params);
         }
 
-        private object RunNativeFunction(GScriptParser.FunctionCallContext context)
+        private object? RunNativeFunction(GScriptParser.FunctionCallContext context)
         {
             var ident = context.IDENTIFIER().GetText();
             var expressions = context.expression();
@@ -499,12 +504,15 @@ namespace AntlrLangDev
 
             if (expressions.Length != funcData.ParamNames.Length)
             {
-                throw new Exception($"(line {context.Start.Line}) error, expected {funcData.ParamNames.Length} parameter(s) but got {expressions.Length}");
+                throw new Exception($"(line {context.Start.Line}) error, expected {funcData.ParamNames.Length} parameter(s) but got {expressions.Length}.");
             }
 
             for (int i = 0; i < funcData.ParamNames.Length; i++)
             {
-                var value = Visit(expressions[i]);
+                object? value = Visit(expressions[i]);
+                if(value == null){
+                    throw new Exception($"(line {context.Start.Line}) error, function parameter {funcData.ParamNames[i]} is null.");
+                }
                 ParamMemory.Add(funcData.ParamNames[i], value);
             }
 
