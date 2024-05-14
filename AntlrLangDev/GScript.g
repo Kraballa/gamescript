@@ -22,10 +22,15 @@ block: '{' line* '}';
 assignment: (scope '.')? IDENTIFIER '=' expression;
 
 functionDefinition:
-    'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' block;
+    'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' functionBlock;
+
+functionBlock: '{' line* returnStatement?  '}';
 
 functionCall:
     IDENTIFIER '(' (expression (',' expression)*)? ')';
+
+returnStatement:
+    'return' expression ';';
 
 expression:
     constant                          # constantExpression

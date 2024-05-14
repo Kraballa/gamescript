@@ -130,6 +130,22 @@ function test3(){
 }
 test3();
 
+function pow(val, power){
+    power = power|int;
+    ret = 1;
+    i = 0;
+    while(i < power){
+        ret = ret * val;
+        i = i+1;
+    }
+    return ret;
+}
+
+assert(pow(4,0) == 1);
+assert(pow(4,1) == 4);
+assert(pow(4,2) == 16);
+assert(pow(4,3) == 64);
+
 //test parameter scoping
 val = 10;
 toAdd = 5;

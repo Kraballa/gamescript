@@ -469,7 +469,7 @@ namespace AntlrLangDev
                 _params[i - 1] = idtfs[i].GetText();
             }
 
-            var block = context.block();
+            var block = context.functionBlock();
             NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params));
             return null;
         }
@@ -493,6 +493,22 @@ namespace AntlrLangDev
                 return ret;
             }
             throw new Exception($"(line {context.Start.Line}) error, function {ident} not found.");
+        }
+
+        public override object? VisitReturnStatement([NotNull] GScriptParser.ReturnStatementContext context)
+        {
+            return Visit(context.expression());
+        }
+
+        public override object? VisitFunctionBlock([NotNull] GScriptParser.FunctionBlockContext context)
+        {
+            VisitChildren(context);
+            var retContext = context.returnStatement();
+            if (retContext != null)
+            {
+                return VisitReturnStatement(retContext);
+            }
+            return null;
         }
 
         private object? RunExternalFunction(GScriptParser.FunctionCallContext context)
@@ -531,7 +547,6 @@ namespace AntlrLangDev
                 }
                 ParamMemory.Add(funcData.ParamNames[i], value);
             }
-
             return Visit(funcData.Block);
         }
 

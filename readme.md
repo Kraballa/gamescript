@@ -8,7 +8,6 @@
 - nested functions, function scoping and overloading
 
 ## Missing Features
-- native functions currently cannot return values
 - no array types
 - dynamic typing by virtue of not storing type data. in the near future we'll have static typing.
 
@@ -60,4 +59,24 @@ assert(true | false & false); //fails if and/or precedence faulty
 assert(1);
 assert(-1+2);
 assert(0.001);
+```
+
+### Power Function
+```
+[...]
+function pow(val, power){
+    power = power|int;
+    ret = 1;
+    i = 0;
+    while(i < power){
+        ret = ret * val;
+        i = i+1;
+    }
+    return ret;
+}
+
+assert(pow(4,0) == 1);
+assert(pow(4,1) == 4);
+assert(pow(4,2) == 16);
+assert(pow(4,3) == 64);
 ```

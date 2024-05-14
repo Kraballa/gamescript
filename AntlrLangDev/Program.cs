@@ -22,9 +22,7 @@ class Program
     private static void RunScript(string path)
     {
         string content = File.ReadAllText(path);
-
         var inputStream = new AntlrInputStream(content);
-
         var lexer = new GScriptLexer(inputStream);
         var tokenStream = new CommonTokenStream(lexer);
         var parser = new GScriptParser(tokenStream);
