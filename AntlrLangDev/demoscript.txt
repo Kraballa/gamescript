@@ -1,48 +1,13 @@
-i = 4;
-j = i + 4;
-print(j * i + 5);
-print(5 + j * i); //assert(false);
 
-//test
+var = 5;
 
-z = 5.5;
-//assert(false);
-y = 24.7;
+function test(var){
+    print(var);
+    var = 1;
+    print(var);
+    print(global.var);
 
-u = y % z;
-a = false;
-b = (a | !a);
-
-c = (true | false) & (true & true);
-assert(c);
-
-c = c & (true & (false & true));
-assert(!c);
-
-c = true | false & false;
-assert(c, true);
-
-print(b);
-
-print("peepo happy");
-
-while(i > 2) {
-    i = i - 1;
-    name = "Hello John";
-    out = i + ": " + name;
-    print(out);
+    global.xyz = 3;
 }
-
-if(i > -343){
-    print(i);
-}
-
-if(i >= 0) {
-    print("i > 0");
-}
-else if(i < 0) {
-    print("i < 0");
-}
-else {
-    print("i == 0");
-}
+test(0);
+print(xyz);

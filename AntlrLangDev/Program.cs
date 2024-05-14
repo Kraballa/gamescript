@@ -9,7 +9,14 @@ class Program
     {
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 
-        RunScript("testscript.txt");
+        if (args.Length == 2 && File.Exists(args[1]))
+        {
+            RunScript(args[1]);
+        }
+        else
+        {
+            RunScript("demoscript.txt");
+        }
     }
 
     private static void RunScript(string path)

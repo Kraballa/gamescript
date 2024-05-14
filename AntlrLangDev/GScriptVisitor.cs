@@ -32,17 +32,33 @@ namespace AntlrLangDev
             return (float)rand.NextDouble();
         }
 
-        public override object VisitAssignment([NotNull] GScriptParser.AssignmentContext context)
+        public override object? VisitAssignment([NotNull] GScriptParser.AssignmentContext context)
         {
             string name = context.IDENTIFIER().GetText();
             object? value = Visit(context.expression());
             if (value == null)
-                throw new Exception($"error, variable {name} is null");
-            Memory.Add(name, value);
+                throw new Exception($"(line {context.Start.Line}) error, variable {name} is null");
+
+            var scope = context.scope();
+
+            if (scope != null && scope.GetText() == "global")
+            {
+                Memory[name] = value;
+                return null;
+            }
+
+            if (ParamMemory.ContainsKey(name))
+            {
+                ParamMemory[name] = value;
+            }
+            else
+            {
+                Memory[name] = value;
+            }
             return null;
         }
 
-        public override object VisitConstant([NotNull] GScriptParser.ConstantContext context)
+        public override object? VisitConstant([NotNull] GScriptParser.ConstantContext context)
         {
             if (context.INTEGER() is { } i)
             {
@@ -73,10 +89,11 @@ namespace AntlrLangDev
             var scope = context.scope();
             if (scope != null && scope.GetText() == "global")
             {
-                if (Memory.ContainsKey(varname))
+                if (!Memory.ContainsKey(varname))
                 {
-                    return Memory[varname];
+                    throw new Exception($"(line {context.Start.Line}) error, cannot create new variable {varname} in global scope.");
                 }
+                return Memory[varname];
             }
             else
             {
@@ -89,13 +106,17 @@ namespace AntlrLangDev
                     return Memory[varname];
                 }
             }
-            throw new Exception($"error, variable {varname} not found");
+            throw new Exception($"(line {context.Start.Line}) error, variable {varname} not found");
         }
 
         public override object VisitTypecastExpression([NotNull] GScriptParser.TypecastExpressionContext context)
         {
             string targetType = context.type().GetText();
-            object var = Visit(context.expression());
+            object? var = Visit(context.expression());
+            if (var == null)
+            {
+                throw new Exception($"(line {context.Start.Line}) error, trying to cast null expression");
+            }
             Type varType = var.GetType();
 
             if (targetType == "string")
@@ -116,7 +137,7 @@ namespace AntlrLangDev
                 if (varType == typeof(float)) return (int)(float)var;
                 if (varType == typeof(int)) return var;
             }
-            throw new Exception($"error, conversion from {varType} to {targetType} not supported");
+            throw new Exception($"(line {context.Start.Line}) error, conversion from {varType} to {targetType} not supported");
         }
 
         public override object VisitNegatedExpression([NotNull] GScriptParser.NegatedExpressionContext context)
@@ -127,7 +148,7 @@ namespace AntlrLangDev
             {
                 return !logicValue;
             }
-            throw new Exception($"error, variable of type {value.GetType()} cannot be bool-negated.");
+            throw new Exception($"(line {context.Start.Line}) error, variable of type {value.GetType()} cannot be bool-negated.");
         }
 
         public override object VisitMultExpression([NotNull] GScriptParser.MultExpressionContext context)
@@ -144,7 +165,7 @@ namespace AntlrLangDev
             if ((type1 != typeof(int) && type1 != typeof(float)) ||
             (type2 != typeof(int) && type2 != typeof(float)))
             {
-                throw new Exception("error, invalid operator for mult operation");
+                throw new Exception($"error, invalid operator '{op}' for mult operation");
             }
 
             bool isInt = type1 == typeof(int) && type2 == typeof(int);
@@ -179,7 +200,7 @@ namespace AntlrLangDev
                         return Convert.ToSingle(res1) % Convert.ToSingle(res2);
                     }
             }
-            throw new Exception("error, invalid mult operation");
+            throw new Exception($"error, invalid mult operation '{op}'");
         }
 
         public override object VisitAddExpression([NotNull] GScriptParser.AddExpressionContext context)
@@ -192,7 +213,7 @@ namespace AntlrLangDev
 
             if (res1 == null || res2 == null)
             {
-                throw new Exception("error, invalid operators for add operation");
+                throw new Exception($"error, invalid add operator '{op}'.");
             }
 
             var type1 = res1.GetType();
@@ -227,7 +248,7 @@ namespace AntlrLangDev
                         return Convert.ToSingle(res1) - Convert.ToSingle(res2);
                     }
             }
-            throw new Exception("error, invalid add operation");
+            throw new Exception($"error, invalid add operation '{op}'");
         }
 
         public override object VisitCompareExpression([NotNull] GScriptParser.CompareExpressionContext context)
@@ -242,7 +263,7 @@ namespace AntlrLangDev
 
             if (type1 == null || type2 == null)
             {
-                throw new Exception("error, compare operation not defined for null type");
+                throw new Exception($"(line {context.Start.Line}) error, compare operation not defined for null type");
             }
 
             var op = context.compareOp().GetText();
@@ -251,7 +272,7 @@ namespace AntlrLangDev
             {
                 if (type1 != typeof(string) || type2 != typeof(string))
                 {
-                    throw new Exception("error, can't compare string to non-string");
+                    throw new Exception($"(line {context.Start.Line}) error, can't compare string to non-string");
                 }
                 switch (op)
                 {
@@ -260,7 +281,7 @@ namespace AntlrLangDev
                     case "!=":
                         return (string)res1 != (string)res2;
                     default:
-                        throw new Exception($"error, invalid operation for string comparison: {op}");
+                        throw new Exception($"(line {context.Start.Line}) error, invalid operation for string comparison: {op}");
                 }
             }
 
@@ -273,7 +294,7 @@ namespace AntlrLangDev
                     case "!=":
                         return IsTruthy(res1) != IsTruthy(res2);
                     default:
-                        throw new Exception($"error, invalid operation for bool-ish comparison: {op}");
+                        throw new Exception($"(line {context.Start.Line}) error, invalid operation for bool-ish comparison: {op}");
                 }
             }
 
@@ -336,7 +357,7 @@ namespace AntlrLangDev
                         return Convert.ToSingle(res1) <= Convert.ToSingle(res2);
                     }
             }
-            throw new Exception($"error, unknown operation {op}");
+            throw new Exception($"(line {context.Start.Line}) error, unknown operation {op}");
         }
 
         public override object VisitAndExpression([NotNull] GScriptParser.AndExpressionContext context)
@@ -348,7 +369,7 @@ namespace AntlrLangDev
 
             if (res1.GetType() != typeof(bool) || res2.GetType() != typeof(bool))
             {
-                throw new Exception("error, non-boolean value used for bool operator");
+                throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator");
             }
             return (bool)res1 & (bool)res2;
         }
@@ -362,7 +383,7 @@ namespace AntlrLangDev
 
             if (res1.GetType() != typeof(bool) || res2.GetType() != typeof(bool))
             {
-                throw new Exception("error, non-boolean value used for bool operator");
+                throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator");
             }
             return (bool)res1 | (bool)res2;
         }
@@ -414,10 +435,11 @@ namespace AntlrLangDev
 
             if (ExternalFuncts.ContainsKey(funcName))
             {
-                throw new Exception($"error, can't reuse external function name '{funcName}'");
+                throw new Exception($"(line {context.Start.Line}) error, can't reuse external function name '{funcName}'");
             }
-            if(NativeFuncts.Peek().ContainsKey(funcName)){
-                throw new Exception($"error, function '{funcName}' already defined in this scope.");
+            if (NativeFuncts.Peek().ContainsKey(funcName))
+            {
+                throw new Exception($"(line {context.Start.Line}) error, function '{funcName}' already defined in this scope.");
             }
 
             string[] _params = new string[idtfs.Length - 1];
@@ -450,7 +472,7 @@ namespace AntlrLangDev
                 ParamMemory.ExitBlock();
                 return ret;
             }
-            throw new Exception($"error, function {ident} not found.");
+            throw new Exception($"(line {context.Start.Line}) error, function {ident} not found.");
         }
 
         private object RunExternalFunction(GScriptParser.FunctionCallContext context)
@@ -462,7 +484,7 @@ namespace AntlrLangDev
             {
                 object? ret = Visit(context.children[i * 2 + 2]);
                 if (ret == null)
-                    throw new Exception($"error, parameter at index {i} evaluated to null");
+                    throw new Exception($"(line {context.Start.Line}) error, parameter at index {i} evaluated to null");
                 _params[i] = (object)ret;
             }
 
@@ -477,7 +499,7 @@ namespace AntlrLangDev
 
             if (expressions.Length != funcData.ParamNames.Length)
             {
-                throw new Exception($"error, expected {funcData.ParamNames.Length} parameter(s) but got {expressions.Length}");
+                throw new Exception($"(line {context.Start.Line}) error, expected {funcData.ParamNames.Length} parameter(s) but got {expressions.Length}");
             }
 
             for (int i = 0; i < funcData.ParamNames.Length; i++)
