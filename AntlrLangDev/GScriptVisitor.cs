@@ -9,7 +9,7 @@ namespace AntlrLangDev
 
         public readonly StackDict<object> Memory = new();
 
-        private readonly Dictionary<string, Func<object[], object>> ExternalFuncts = new();
+        private readonly Dictionary<string, Func<object[], object?>> ExternalFuncts = new();
         private readonly StackDict<NativeFuncData> NativeFuncts = new();
         private readonly StackDict<object> ParamMemory = new();
 
@@ -21,7 +21,7 @@ namespace AntlrLangDev
             ExternalFuncts.Add("rand", RandomOp);
         }
 
-        private object PrintOp(object[] args)
+        private object? PrintOp(object[] args)
         {
             Console.WriteLine(args[0].ToString());
             return null;
@@ -115,7 +115,7 @@ namespace AntlrLangDev
             object? var = Visit(context.expression());
             if (var == null)
             {
-                throw new Exception($"(line {context.Start.Line}) error, trying to cast null expression");
+                throw new Exception($"(line {context.Start.Line}) error, typecast not defined for null type.");
             }
             Type varType = var.GetType();
 
@@ -142,13 +142,13 @@ namespace AntlrLangDev
 
         public override object VisitNegatedExpression([NotNull] GScriptParser.NegatedExpressionContext context)
         {
-            var value = Visit(context.expression());
-            bool? logicValue = IsTruthy(value);
-            if (logicValue != null)
+            object? value = Visit(context.expression());
+
+            if (value == null)
             {
-                return !logicValue;
+                throw new Exception($"(line {context.Start.Line}) error, cannot negate null.");
             }
-            throw new Exception($"(line {context.Start.Line}) error, variable of type {value.GetType()} cannot be bool-negated.");
+            return !IsTruthy(value);
         }
 
         public override object VisitMultExpression([NotNull] GScriptParser.MultExpressionContext context)
@@ -158,6 +158,11 @@ namespace AntlrLangDev
 
             var res1 = Visit(expressions[0]);
             var res2 = Visit(expressions[1]);
+
+            if (res1 == null || res2 == null)
+            {
+                throw new Exception($"(line {context.Start.Line}) error, mult operation not defined for null type.");
+            }
 
             var type1 = res1.GetType();
             var type2 = res2.GetType();
@@ -258,21 +263,20 @@ namespace AntlrLangDev
             var res1 = Visit(expressions[0]);
             var res2 = Visit(expressions[1]);
 
-            var type1 = res1.GetType();
-            var type2 = res2.GetType();
-
-            if (type1 == null || type2 == null)
+            if (res1 == null || res2 == null)
             {
-                throw new Exception($"(line {context.Start.Line}) error, compare operation not defined for null type");
+                throw new Exception($"(line {context.Start.Line}) error, compare operation not defined for null type.");
             }
 
+            var type1 = res1.GetType();
+            var type2 = res2.GetType();
             var op = context.compareOp().GetText();
 
             if (type1 == typeof(string) || type2 == typeof(string))
             {
                 if (type1 != typeof(string) || type2 != typeof(string))
                 {
-                    throw new Exception($"(line {context.Start.Line}) error, can't compare string to non-string");
+                    throw new Exception($"(line {context.Start.Line}) error, can't compare string to non-string.");
                 }
                 switch (op)
                 {
@@ -281,7 +285,7 @@ namespace AntlrLangDev
                     case "!=":
                         return (string)res1 != (string)res2;
                     default:
-                        throw new Exception($"(line {context.Start.Line}) error, invalid operation for string comparison: {op}");
+                        throw new Exception($"(line {context.Start.Line}) error, invalid operation for string comparison: {op}.");
                 }
             }
 
@@ -294,7 +298,7 @@ namespace AntlrLangDev
                     case "!=":
                         return IsTruthy(res1) != IsTruthy(res2);
                     default:
-                        throw new Exception($"(line {context.Start.Line}) error, invalid operation for bool-ish comparison: {op}");
+                        throw new Exception($"(line {context.Start.Line}) error, invalid operation for bool-ish comparison: {op}.");
                 }
             }
 
@@ -367,9 +371,14 @@ namespace AntlrLangDev
             var res1 = Visit(expressions[0]);
             var res2 = Visit(expressions[1]);
 
+            if (res1 == null || res2 == null)
+            {
+                throw new Exception($"(line {context.Start.Line}) error, and operation not defined for null type.");
+            }
+
             if (res1.GetType() != typeof(bool) || res2.GetType() != typeof(bool))
             {
-                throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator");
+                throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator.");
             }
             return (bool)res1 & (bool)res2;
         }
@@ -381,6 +390,11 @@ namespace AntlrLangDev
             var res1 = Visit(expressions[0]);
             var res2 = Visit(expressions[1]);
 
+            if (res1 == null || res2 == null)
+            {
+                throw new Exception($"(line {context.Start.Line}) error, or operation not defined for null type.");
+            }
+
             if (res1.GetType() != typeof(bool) || res2.GetType() != typeof(bool))
             {
                 throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator.");
@@ -391,7 +405,8 @@ namespace AntlrLangDev
         public override object VisitEnclosedExpression([NotNull] GScriptParser.EnclosedExpressionContext context)
         {
             object? res = Visit(context.expression());
-            if(res == null){
+            if (res == null)
+            {
                 throw new Exception($"(line {context.Start.Line}) error, enclosed expression evaluated to null.");
             }
 
@@ -433,14 +448,14 @@ namespace AntlrLangDev
             return null;
         }
 
-        public override object VisitFunctionDefinition([NotNull] GScriptParser.FunctionDefinitionContext context)
+        public override object? VisitFunctionDefinition([NotNull] GScriptParser.FunctionDefinitionContext context)
         {
             var idtfs = context.IDENTIFIER();
             string funcName = idtfs[0].GetText();
 
             if (ExternalFuncts.ContainsKey(funcName))
             {
-                throw new Exception($"(line {context.Start.Line}) error, can't reuse external function name '{funcName}'");
+                throw new Exception($"(line {context.Start.Line}) error, can't reuse external function name '{funcName}'.");
             }
             if (NativeFuncts.Peek().ContainsKey(funcName))
             {
@@ -480,7 +495,7 @@ namespace AntlrLangDev
             throw new Exception($"(line {context.Start.Line}) error, function {ident} not found.");
         }
 
-        private object RunExternalFunction(GScriptParser.FunctionCallContext context)
+        private object? RunExternalFunction(GScriptParser.FunctionCallContext context)
         {
             var ident = context.IDENTIFIER().GetText();
             int numExpr = (context.children.Count - 2) / 2;
@@ -510,7 +525,8 @@ namespace AntlrLangDev
             for (int i = 0; i < funcData.ParamNames.Length; i++)
             {
                 object? value = Visit(expressions[i]);
-                if(value == null){
+                if (value == null)
+                {
                     throw new Exception($"(line {context.Start.Line}) error, function parameter {funcData.ParamNames[i]} is null.");
                 }
                 ParamMemory.Add(funcData.ParamNames[i], value);
@@ -521,6 +537,11 @@ namespace AntlrLangDev
 
         private bool IsTruthy(object? value)
         {
+            if (value == null)
+            {
+                throw new Exception($"error, truthiness of null not defined.");
+            }
+
             if (value is bool b)
             {
                 return b;
@@ -534,7 +555,7 @@ namespace AntlrLangDev
                 return f > 0f;
             }
 
-            throw new Exception($"error, can't decide truthiness of value {value} (type {value.GetType()})");
+            throw new Exception($"error, can't decide truthiness of value {value} (type {value.GetType()}).");
         }
     }
 }
