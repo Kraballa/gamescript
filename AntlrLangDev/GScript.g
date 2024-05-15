@@ -43,7 +43,8 @@ expression:
     | expression addOp expression     # addExpression
     | expression compareOp expression # compareExpression
     | expression andOp expression     # andExpression
-    | expression orOp expression      # orExpression;
+    | expression orOp expression      # orExpression
+    | expression nullOp expression    # nullCoalescingExpression;
 
 scope: 'global';
 type: 'int' | 'float' | 'string' | 'bool';
@@ -52,6 +53,7 @@ addOp: '+' | '-';
 compareOp: '==' | '!=' | '>' | '<' | '>=' | '<=';
 andOp: '&';
 orOp: '|';
+nullOp: '??';
 
 constant: INTEGER | FLOAT | STRING | BOOL | NULL;
 

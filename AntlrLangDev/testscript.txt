@@ -208,4 +208,20 @@ assert(xyz == 3);
 
 
 finalizeAssert();
+
+print("## test null coalescing");
+
+assert(null ?? true);
+
+function nullFunc(){
+    //return nothing
+}
+assert(nullFunc() ?? true);
+
+function nullFunc2(){
+    return true;
+}
+
+assert(nullFunc2() ?? false);
+
 concludeTests();

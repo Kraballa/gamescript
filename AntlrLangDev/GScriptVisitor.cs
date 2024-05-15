@@ -121,7 +121,7 @@ namespace AntlrLangDev
 
             if (targetType == "string")
             {
-                return var.ToString();
+                return var.ToString() ?? "";
             }
             if (targetType == "bool")
             {
@@ -400,6 +400,12 @@ namespace AntlrLangDev
                 throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator.");
             }
             return (bool)res1 | (bool)res2;
+        }
+
+        public override object? VisitNullCoalescingExpression([NotNull] GScriptParser.NullCoalescingExpressionContext context)
+        {
+            var expr = context.expression();
+            return Visit(expr[0]) ?? Visit(expr[1]);
         }
 
         public override object VisitEnclosedExpression([NotNull] GScriptParser.EnclosedExpressionContext context)
