@@ -31,18 +31,18 @@ functionCall:
 returnStatement: 'return' expression? ';';
 
 expression:
-    constant                          # constantExpression
-    | (scope '.')? IDENTIFIER         # identifierExpression
+    (scope '.')? IDENTIFIER           # identifierExpression
     | functionCall                    # functionCallExpression
     | '(' expression ')'              # enclosedExpression
     | expression '|' type             # typecastExpression
-    | '!' expression                  # negatedExpression
+    | unaryOp expression              # unaryExpression
     | expression multOp expression    # multExpression
     | expression addOp expression     # addExpression
     | expression compareOp expression # compareExpression
     | expression andOp expression     # andExpression
     | expression orOp expression      # orExpression
-    | expression nullOp expression    # nullCoalescingExpression;
+    | expression nullOp expression    # nullCoalescingExpression
+    | constant                        # constantExpression;
 
 scope: 'global';
 type: 'int' | 'float' | 'string' | 'bool';
@@ -52,13 +52,14 @@ compareOp: '==' | '!=' | '>' | '<' | '>=' | '<=';
 andOp: '&';
 orOp: '|';
 nullOp: '??';
+unaryOp: '-' | '!';
 
 constant: INTEGER | FLOAT | STRING | BOOL | NULL;
 
 // lexer
 
-FLOAT: [-]? [0-9]+ '.' [0-9]* | '.' [0-9]+;
-INTEGER: [-]? [0-9]+;
+FLOAT: [0-9]+ '.' [0-9]* | '.' [0-9]+;
+INTEGER: [0-9]+;
 STRING: ('"' ~'"'* '"') | ('\'' ~'\''* '\'');
 BOOL: 'true' | 'false';
 NULL: 'null';

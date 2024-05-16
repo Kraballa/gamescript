@@ -1,4 +1,5 @@
 ﻿
+using System.Security.Principal;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 
@@ -152,17 +153,6 @@ namespace AntlrLangDev
                 if (varType == typeof(int)) return var;
             }
             throw new Exception($"(line {context.Start.Line}) error, conversion from {varType} to {targetType} not supported");
-        }
-
-        public override object VisitNegatedExpression([NotNull] GScriptParser.NegatedExpressionContext context)
-        {
-            object? value = Visit(context.expression());
-
-            if (value == null)
-            {
-                throw new Exception($"(line {context.Start.Line}) error, cannot negate null.");
-            }
-            return !IsTruthy(value);
         }
 
         public override object VisitMultExpression([NotNull] GScriptParser.MultExpressionContext context)
@@ -422,6 +412,31 @@ namespace AntlrLangDev
             return Visit(expr[0]) ?? Visit(expr[1]);
         }
 
+        public override object VisitUnaryExpression([NotNull] GScriptParser.UnaryExpressionContext context)
+        {
+            object? value = Visit(context.expression());
+
+            if (value == null)
+            {
+                throw new Exception($"(line {context.Start.Line}) error, cannot operate on null.");
+            }
+            var unaryOp = context.unaryOp().GetText();
+            if (unaryOp == "!")
+            {
+                return !IsTruthy(value);
+            }
+            if (unaryOp == "-")
+            {
+                if(value is int i){
+                    return -i;
+                }
+                if(value is float f){
+                    return -f;
+                }
+            }
+            throw new Exception($"(line {context.Start.Line}) error, unary operator '{unaryOp}' not recognized.");
+        }
+
         public override object VisitEnclosedExpression([NotNull] GScriptParser.EnclosedExpressionContext context)
         {
             object? res = Visit(context.expression());
@@ -519,7 +534,8 @@ namespace AntlrLangDev
         {
             functionReturned = true;
             var expr = context.expression();
-            if(expr != null){
+            if (expr != null)
+            {
                 funcReturnData = Visit(expr);
             }
             return null;
