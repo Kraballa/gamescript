@@ -31,7 +31,8 @@ functionCall:
 returnStatement: 'return' expression? ';';
 
 expression:
-    (scope '.')? IDENTIFIER           # identifierExpression
+    constant                          # constantExpression
+    | (scope '.')? IDENTIFIER         # identifierExpression
     | functionCall                    # functionCallExpression
     | '(' expression ')'              # enclosedExpression
     | expression '|' type             # typecastExpression
@@ -41,8 +42,7 @@ expression:
     | expression compareOp expression # compareExpression
     | expression andOp expression     # andExpression
     | expression orOp expression      # orExpression
-    | expression nullOp expression    # nullCoalescingExpression
-    | constant                        # constantExpression;
+    | expression nullOp expression    # nullCoalescingExpression;
 
 scope: 'global';
 type: 'int' | 'float' | 'string' | 'bool';
