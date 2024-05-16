@@ -3,14 +3,14 @@ grammar GScript;
 program: line+ EOF;
 
 line:
-    statement            # statementLine
+    statement ';'        # statementLine
     | ifBlock            # ifBlockLine
     | whileBlock         # whileBlockLine
     | block              # blockLine
     | functionDefinition # functionDefinitionLine
     | returnStatement    # returnStatementLine;
 
-statement: (assignment | functionCall) ';';
+statement: assignment | functionCall;
 
 ifBlock: 'if' '(' expression ')' block ('else' elseIfBlock)?;
 
