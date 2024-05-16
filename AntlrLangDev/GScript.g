@@ -3,11 +3,12 @@ grammar GScript;
 program: line+ EOF;
 
 line:
-    statement
-    | ifBlock
-    | whileBlock
-    | block
-    | functionDefinition;
+    statement            # statementLine
+    | ifBlock            # ifBlockLine
+    | whileBlock         # whileBlockLine
+    | block              # blockLine
+    | functionDefinition # functionDefinitionLine
+    | returnStatement    # returnStatementLine;
 
 statement: (assignment | functionCall) ';';
 
@@ -22,15 +23,12 @@ block: '{' line* '}';
 assignment: (scope '.')? IDENTIFIER '=' expression;
 
 functionDefinition:
-    'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' functionBlock;
-
-functionBlock: '{' line* returnStatement?  '}';
+    'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' block;
 
 functionCall:
     IDENTIFIER '(' (expression (',' expression)*)? ')';
 
-returnStatement:
-    'return' expression ';';
+returnStatement: 'return' expression? ';';
 
 expression:
     constant                          # constantExpression

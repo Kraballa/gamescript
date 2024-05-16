@@ -1,5 +1,6 @@
 ﻿
 using Antlr4.Runtime.Misc;
+using Antlr4.Runtime.Tree;
 
 namespace AntlrLangDev
 {
@@ -12,6 +13,9 @@ namespace AntlrLangDev
         private readonly Dictionary<string, Func<object[], object?>> ExternalFuncts = new();
         private readonly StackDict<NativeFuncData> NativeFuncts = new();
         private readonly StackDict<object> ParamMemory = new();
+
+        private bool functionReturned = false;
+        private object? funcReturnData;
 
         private Random rand = new Random();
 
@@ -30,6 +34,11 @@ namespace AntlrLangDev
         private object RandomOp(object[] args)
         {
             return (float)rand.NextDouble();
+        }
+
+        protected override bool ShouldVisitNextChild(IRuleNode node, object currentResult)
+        {
+            return !functionReturned;
         }
 
         public override object? VisitAssignment([NotNull] GScriptParser.AssignmentContext context)
@@ -56,6 +65,11 @@ namespace AntlrLangDev
                 Memory[name] = value;
             }
             return null;
+        }
+
+        public override object? VisitConstantExpression([NotNull] GScriptParser.ConstantExpressionContext context)
+        {
+            return Visit(context.constant());
         }
 
         public override object? VisitConstant([NotNull] GScriptParser.ConstantContext context)
@@ -475,7 +489,7 @@ namespace AntlrLangDev
                 _params[i - 1] = idtfs[i].GetText();
             }
 
-            var block = context.functionBlock();
+            var block = context.block();
             NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params));
             return null;
         }
@@ -503,16 +517,10 @@ namespace AntlrLangDev
 
         public override object? VisitReturnStatement([NotNull] GScriptParser.ReturnStatementContext context)
         {
-            return Visit(context.expression());
-        }
-
-        public override object? VisitFunctionBlock([NotNull] GScriptParser.FunctionBlockContext context)
-        {
-            VisitChildren(context);
-            var retContext = context.returnStatement();
-            if (retContext != null)
-            {
-                return VisitReturnStatement(retContext);
+            functionReturned = true;
+            var expr = context.expression();
+            if(expr != null){
+                funcReturnData = Visit(expr);
             }
             return null;
         }
@@ -553,7 +561,9 @@ namespace AntlrLangDev
                 }
                 ParamMemory.Add(funcData.ParamNames[i], value);
             }
-            return Visit(funcData.Block);
+            Visit(funcData.Block);
+            functionReturned = false;
+            return funcReturnData;
         }
 
         private bool IsTruthy(object? value)

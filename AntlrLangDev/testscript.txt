@@ -139,6 +139,7 @@ function pow(val, power){
         i = i+1;
     }
     return ret;
+    assert(false);
 }
 
 assert(pow(4,0) == 1);
@@ -223,5 +224,12 @@ function nullFunc2(){
 }
 
 assert(nullFunc2() ?? false);
+
+function nullFunc3(){
+    return null;
+}
+nullFunc();
+
+finalizeAssert();
 
 concludeTests();
