@@ -532,12 +532,12 @@ namespace AntlrLangDev
 
         public override object? VisitReturnStatement([NotNull] GScriptParser.ReturnStatementContext context)
         {
-            functionReturned = true;
             var expr = context.expression();
             if (expr != null)
             {
                 funcReturnData = Visit(expr);
             }
+            functionReturned = true;
             return null;
         }
 

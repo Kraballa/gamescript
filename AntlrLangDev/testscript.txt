@@ -217,6 +217,15 @@ function recurse(i){
 }
 recurse(10);
 
+function factorial(i){
+    if(i <= 1){
+        return 1;
+    }
+    return i * factorial(i-1);
+}
+assert(factorial(6) == 720);
+assert(factorial(9) == 362880);
+
 finalizeAssert();
 
 print("## test null coalescing");
