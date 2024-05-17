@@ -20,7 +20,7 @@ whileBlock: 'while' '(' expression ')' block;
 
 block: '{' line* '}';
 
-assignment: (scope '.')? IDENTIFIER '=' expression;
+assignment: (scope '.')? IDENTIFIER assignOp expression;
 
 functionDefinition:
     'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' block;
@@ -46,6 +46,7 @@ expression:
 
 scope: 'global';
 type: 'int' | 'float' | 'string' | 'bool';
+assignOp: '=' | '+=' | '-=';
 multOp: '*' | '/' | '%';
 addOp: '+' | '-';
 compareOp: '==' | '!=' | '>' | '<' | '>=' | '<=';

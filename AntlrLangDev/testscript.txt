@@ -76,6 +76,12 @@ assert((1+1) * 2 == 4);
 assert(6 % 4 == 2);
 assert(6 / 4 == 1);
 
+a = 1;
+a += 5;
+assert(a == 6);
+a -= 1;
+assert(a == 5);
+
 finalizeAssert();
 
 print("## test control structure logic");
@@ -138,7 +144,7 @@ function pow(val, power){
     i = 0;
     while(i < power){
         ret = ret * val;
-        i = i+1;
+        i += 1;
     }
     return ret;
     assert(false);
@@ -155,7 +161,7 @@ toAdd = 5;
 function add(val){
     assert(val == 5);
     assert(global.val == 10);
-    global.val = global.val + val;
+    global.val += val;
     assert(global.val == 15);
 }
 add(toAdd);

@@ -50,20 +50,78 @@ namespace AntlrLangDev
                 throw new Exception($"(line {context.Start.Line}) error, variable {name} is null");
 
             var scope = context.scope();
+            var operation = context.assignOp().GetText();
 
-            if (scope != null && scope.GetText() == "global")
+            bool isVariable = scope != null && scope.GetText() == "global" //global variable
+            || !ParamMemory.ContainsKey(name); //not in param list
+
+            if (operation == "=")
             {
-                Memory[name] = value;
+                if (isVariable)
+                {
+                    Memory[name] = value;
+                }
+                else
+                {
+                    ParamMemory[name] = value;
+                }
                 return null;
             }
-
-            if (ParamMemory.ContainsKey(name))
+            object val = isVariable ? Memory[name] : ParamMemory[name];
+            if (val is string s)
             {
-                ParamMemory[name] = value;
+                if (operation == "+=")
+                {
+                    val = s += value;
+                }
+                else
+                {
+                    throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for strings.");
+                }
+            }
+            else if (val is float f)
+            {
+                if (operation == "+=")
+                {
+                    f += Convert.ToSingle(value);
+                }
+                else if (operation == "-=")
+                {
+                    f -= Convert.ToSingle(value);
+                }
+                else
+                {
+                    throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for floats.");
+                }
+                val = f;
+            }
+            else if (val is int i)
+            {
+                if (operation == "+=")
+                {
+                    i += Convert.ToInt32(value);
+                }
+                else if (operation == "-=")
+                {
+                    i -= Convert.ToInt32(value);
+                }
+                else
+                {
+                    throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for floats.");
+                }
+                val = i;
             }
             else
             {
-                Memory[name] = value;
+                throw new Exception($"(line {context.Start.Line}) error, ");
+            }
+            if (isVariable)
+            {
+                Memory[name] = val;
+            }
+            else
+            {
+                ParamMemory[name] = val;
             }
             return null;
         }
@@ -427,10 +485,12 @@ namespace AntlrLangDev
             }
             if (unaryOp == "-")
             {
-                if(value is int i){
+                if (value is int i)
+                {
                     return -i;
                 }
-                if(value is float f){
+                if (value is float f)
+                {
                     return -f;
                 }
             }
