@@ -24,12 +24,25 @@ namespace AntlrLangDev
         {
             ExternalFuncts.Add("print", PrintOp);
             ExternalFuncts.Add("rand", RandomOp);
+            ExternalFuncts.Add("length", LengthOp);
         }
 
         private object? PrintOp(object[] args)
         {
             Console.WriteLine(args[0].ToString());
             return null;
+        }
+
+        private object LengthOp(object[] args)
+        {
+            if (args.Length != 1)
+                throw new Exception($"error, expected one argument, got {args.Length}");
+            if(args[0] is string s){
+                return s.Length;
+            }
+            else{
+                return 1;
+            }
         }
 
         private object RandomOp(object[] args)
@@ -67,6 +80,7 @@ namespace AntlrLangDev
                 }
                 return null;
             }
+
             object val = isVariable ? Memory[name] : ParamMemory[name];
             if (val is string s)
             {
@@ -81,13 +95,14 @@ namespace AntlrLangDev
             }
             else if (val is float f)
             {
+                float operand = Convert.ToSingle(value);
                 if (operation == "+=")
                 {
-                    f += Convert.ToSingle(value);
+                    f += operand;
                 }
                 else if (operation == "-=")
                 {
-                    f -= Convert.ToSingle(value);
+                    f -= operand;
                 }
                 else
                 {
@@ -97,13 +112,14 @@ namespace AntlrLangDev
             }
             else if (val is int i)
             {
+                int operand = Convert.ToInt32(value);
                 if (operation == "+=")
                 {
-                    i += Convert.ToInt32(value);
+                    i += operand;
                 }
                 else if (operation == "-=")
                 {
-                    i -= Convert.ToInt32(value);
+                    i -= operand;
                 }
                 else
                 {
@@ -113,7 +129,7 @@ namespace AntlrLangDev
             }
             else
             {
-                throw new Exception($"(line {context.Start.Line}) error, ");
+                throw new Exception($"(line {context.Start.Line}) error, assignment for variable of type '{val.GetType()}'.");
             }
             if (isVariable)
             {
