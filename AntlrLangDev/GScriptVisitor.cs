@@ -50,7 +50,7 @@ namespace AntlrLangDev
             return (float)rand.NextDouble();
         }
 
-        protected override bool ShouldVisitNextChild(IRuleNode node, object currentResult)
+        protected override bool ShouldVisitNextChild(IRuleNode node, object? currentResult)
         {
             return !functionReturned;
         }
