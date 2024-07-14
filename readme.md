@@ -1,22 +1,21 @@
 # GScript scripting language
-'GScript' (gamescript) is a simplistic interpreted (for now) *statically* typed programming language. It was created using the parser generator Antlr. I may potentially use it in future games which is why it's called 'gamescript'. The main purpose of this project is the study of programming language design and development.
+'GScript' (gamescript) is an interpreted (for now) *statically* typed programming language. It was created using the parser generator Antlr. I may potentially use it in future games which is why it's called 'gamescript'. The main purpose of this project is the study of programming language design and development.
 
 ## Features
 - 4 types: int, float, string, bool
 - functions, both native (defined inside gamescript), and external (callback to csharp)
 - scoped variables, name overloading and parameter overloading with a `global` keyword
 - nested functions, function scoping and overloading
+- statically typed variables
 
 ## Missing Features
 - no array types
-- dynamic typing by virtue of not storing type data. in the near future we'll have static typing.
+- typed function returns
 
 ## Code Examples
 For a lot of code check `testscript.txt`, it contains the entire test suite with which the language is validated. Here are some smaller code examples.
 
 ### Scoping Behavior
-To sum up the above, you can do this:
-
 ```
 function assert(bool ojb){
     if(!obj){
@@ -38,8 +37,6 @@ function testA(int test){
 testA(1);
 ```
 
-None of the above is crazy, the goal is just to achieve parity with csharp and many other programming languages in terms of overloading/scoping behavior.
-
 ### Random function
 Dice roll example making use of the external `rand()` function:
 ```
@@ -54,7 +51,7 @@ assert(true);
 assert(!false);
 assert(true | false);
 assert(!(true & false));
-assert(true | false & false); //fails if and/or precedence faulty
+assert(true | false & false); //fails if 'and/or' precedence faulty
 
 assert(1);
 assert(-1+2);

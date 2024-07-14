@@ -1,6 +1,6 @@
 print("# TESTSCRIPT");
 
-const int epsilon = 0.0001;
+const float epsilon = 0.0001;
 
 int totalAsserts = 0;
 int totalFailures = 0;
@@ -97,6 +97,13 @@ assert(intA == 6);
 intA -= 1;
 assert(intA == 5);
 
+float testFloat = 0.1;
+testFloat += 2;
+testFloat += 2.1;
+testFloat -=4;
+testFloat = 4 + 5.4; // assignment of mixed int and float
+testFloat = 3 * 4; // assignment of ints to float
+
 finalizeAssert();
 
 print("## test control structure logic");
@@ -154,7 +161,7 @@ function test3(){
 test3();
 
 function pow(float val, int power){
-    float ret = 1;
+    float ret = 1.0;
     i = 0;
     while(i < power){
         ret = ret * val;

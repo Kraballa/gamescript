@@ -69,16 +69,27 @@ namespace AntlrLangDev
             var expression = context.expression();
             if (expression == null)
             {
-                if(isConst){
+                if (isConst)
+                {
                     throw new Exception($"error, const variable declaration needs a value (line {context.Start.Line})");
                 }
                 Memory[identifier] = new VariableData(identifier, type, DefaultValueFromType(type));
                 return null;
             }
             object? result = Visit(expression);
-            if(result == null){
+            if (result == null)
+            {
                 throw new Exception($"error, assignment expression evaluated to null");
             }
+            if (type == typeof(float) && result.GetType() == typeof(int))
+            {
+                result = Convert.ToSingle(result);
+            }
+            if (result.GetType() != type)
+            {
+                throw new Exception($"error, trying to assign value of type '{result.GetType()}' to variable of type '{type}' (line {context.Start.Line})");
+            }
+
             Memory[identifier] = new VariableData(identifier, type, result, isConst);
             return null;
         }
@@ -96,25 +107,30 @@ namespace AntlrLangDev
             bool isVariable = scope != null && scope.GetText() == "global" //global variable
             || !ParamMemory.ContainsKey(name); //not in param list
 
-            if(!Memory.ContainsKey(name)){
+            if (!Memory.ContainsKey(name))
+            {
                 throw new Exception($"error, variable '{name}' not declared (line {context.Start.Line})");
             }
 
             VariableData variable = isVariable ? Memory[name] : ParamMemory[name];
 
-            if(variable.Constant){
+            if (variable.Constant)
+            {
                 throw new Exception($"error, illegal value assignment of const variable '{variable.Identifier}' (line {context.Start.Line})");
             }
 
             if (operation == "=")
             {
-                if(variable.Type == value.GetType()){
+                if (variable.Type == value.GetType())
+                {
                     variable.Data = value;
                 }
-                else if(variable.Type == typeof(float) && value.GetType() == typeof(int)){
+                else if (variable.Type == typeof(float) && value.GetType() == typeof(int))
+                {
                     variable.Data = Convert.ToSingle(value);
                 }
-                else{
+                else
+                {
                     throw new Exception($"error, cannot assign value of type '{value.GetType()}' to variable of type '{variable.Type}' (line {context.Start.Line})");
                 }
                 return null;
@@ -349,7 +365,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)((double)res1 + (double)res2);
+                        return Convert.ToSingle(Convert.ToDouble(res1) + Convert.ToDouble(res2));
                     }
                 case "-":
                     if (isInt)
@@ -611,7 +627,8 @@ namespace AntlrLangDev
             {
                 _params[i - 1] = idtfs[i].GetText();
             }
-            for(int i = 0; i < types.Length; i++){
+            for (int i = 0; i < types.Length; i++)
+            {
                 _types[i] = TypeFromString(types[i].GetText());
             }
 
@@ -717,8 +734,10 @@ namespace AntlrLangDev
             throw new Exception($"error, can't decide truthiness of value {value} (type {value.GetType()}).");
         }
 
-        private Type TypeFromString(string name){
-            switch(name){
+        private Type TypeFromString(string name)
+        {
+            switch (name)
+            {
                 case "int": return typeof(int);
                 case "float": return typeof(float);
                 case "string": return typeof(string);
@@ -727,11 +746,12 @@ namespace AntlrLangDev
             }
         }
 
-        private object DefaultValueFromType(Type type){
-            if(type == typeof(int)) return 0;
-            else if(type == typeof(float)) return 0f;
-            else if(type == typeof(string)) return "";
-            else if(type == typeof(bool)) return false;
+        private object DefaultValueFromType(Type type)
+        {
+            if (type == typeof(int)) return 0;
+            else if (type == typeof(float)) return 0f;
+            else if (type == typeof(string)) return "";
+            else if (type == typeof(bool)) return false;
             throw new Exception($"error, type '{type}' not recognised");
         }
     }
