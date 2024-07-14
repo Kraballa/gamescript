@@ -13,10 +13,16 @@ class Program
         {
             RunScript(args[0]);
         }
-        else
+        else if (File.Exists("testscript.txt"))
         {
             RunScript("testscript.txt");
         }
+        else
+        {
+            Console.WriteLine("please supply a path to a script");
+        }
+        Console.Write("press any key to continue...");
+        Console.ReadKey(true);
     }
 
     private static void RunScript(string path)
