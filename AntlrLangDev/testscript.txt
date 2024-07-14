@@ -254,6 +254,8 @@ function nullFunc3(){
 }
 nullFunc();
 
+int memVal = 0;
+
 finalizeAssert();
 
 concludeTests();

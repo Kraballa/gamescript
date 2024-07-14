@@ -10,7 +10,7 @@ line:
     | functionDefinition # functionDefinitionLine
     | returnStatement    # returnStatementLine;
 
-statement: assignment | functionCall;
+statement: declaration | assignment | functionCall;
 
 ifBlock: 'if' '(' expression ')' block ('else' elseIfBlock)?;
 
@@ -19,6 +19,8 @@ elseIfBlock: block | ifBlock;
 whileBlock: 'while' '(' expression ')' block;
 
 block: '{' line* '}';
+
+declaration: type IDENTIFIER (equalOp expression)?;
 
 assignment: (scope '.')? IDENTIFIER assignOp expression;
 
@@ -47,6 +49,7 @@ expression:
 scope: 'global';
 type: 'int' | 'float' | 'string' | 'bool';
 assignOp: '=' | '+=' | '-=';
+equalOp: '=';
 multOp: '*' | '/' | '%';
 addOp: '+' | '-';
 compareOp: '==' | '!=' | '>' | '<' | '>=' | '<=';

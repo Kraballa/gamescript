@@ -55,6 +55,21 @@ namespace AntlrLangDev
             return !functionReturned;
         }
 
+        public override object? VisitDeclaration([NotNull] GScriptParser.DeclarationContext context)
+        {
+            string identifier = context.IDENTIFIER().GetText();
+            if(Memory.ContainsKey(identifier)){
+                throw new Exception($"error, variable of name {identifier} was alrady declared.");
+            }
+            Memory[identifier] = 0;
+            var expression = context.expression();
+            if(expression == null){
+                return null;
+            }
+            Memory[identifier] = Visit(expression);
+            return null;
+        }
+
         public override object? VisitAssignment([NotNull] GScriptParser.AssignmentContext context)
         {
             string name = context.IDENTIFIER().GetText();
