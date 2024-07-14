@@ -96,32 +96,34 @@ namespace AntlrLangDev
                 throw new Exception($"error, variable '{name}' not declared (line {context.Start.Line})");
             }
 
+            VariableData variable = isVariable ? Memory[name] : ParamMemory[name];
+
             if (operation == "=")
             {
-                if (isVariable)
-                {
-                    Memory[name].Data = value;
+                if(variable.Type == value.GetType()){
+                    variable.Data = value;
                 }
-                else
-                {
-                    ParamMemory[name].Data = value;
+                else if(variable.Type == typeof(float) && value.GetType() == typeof(int)){
+                    variable.Data = Convert.ToSingle(value);
+                }
+                else{
+                    throw new Exception($"error, cannot assign value of type '{value.GetType()}' to variable of type '{variable.Type}' (line {context.Start.Line})");
                 }
                 return null;
             }
 
-            object val = isVariable ? Memory[name].Data : ParamMemory[name].Data;
-            if (val is string s)
+            if (variable.Data is string s)
             {
                 if (operation == "+=")
                 {
-                    val = s += value;
+                    variable.Data = s += value;
                 }
                 else
                 {
                     throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for strings.");
                 }
             }
-            else if (val is float f)
+            else if (variable.Data is float f)
             {
                 float operand = Convert.ToSingle(value);
                 if (operation == "+=")
@@ -136,9 +138,9 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for floats.");
                 }
-                val = f;
+                variable.Data = f;
             }
-            else if (val is int i)
+            else if (variable.Data is int i)
             {
                 int operand = Convert.ToInt32(value);
                 if (operation == "+=")
@@ -153,19 +155,11 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for floats.");
                 }
-                val = i;
+                variable.Data = i;
             }
             else
             {
-                throw new Exception($"(line {context.Start.Line}) error, assignment for variable of type '{val.GetType()}'.");
-            }
-            if (isVariable)
-            {
-                Memory[name].Data = val;
-            }
-            else
-            {
-                ParamMemory[name].Data = val;
+                throw new Exception($"(line {context.Start.Line}) error, assignment for variable of type '{variable.Data.GetType()}'.");
             }
             return null;
         }

@@ -6,6 +6,20 @@ int totalFailures = 0;
 int numAsserts = 0;
 int numFailures = 0;
 
+function abs(float param){
+    if(param < 0){
+        return -param;
+    }
+    else{
+        return param;
+    }
+}
+
+function assertFloat(float param1, float param2){
+    float epsilon = 0.0001;
+    assert(abs(param1 - param2) < epsilon);
+}
+
 function assert(bool _obj){
     numAsserts = numAsserts + 1;
     totalAsserts = totalAsserts + 1;
@@ -76,11 +90,11 @@ assert((1+1) * 2 == 4);
 assert(6 % 4 == 2);
 assert(6 / 4 == 1);
 
-a = 1;
-a += 5;
-assert(a == 6);
-a -= 1;
-assert(a == 5);
+int intA = 1;
+intA += 5;
+assert(intA == 6);
+intA -= 1;
+assert(intA == 5);
 
 finalizeAssert();
 
@@ -149,10 +163,10 @@ function pow(float val, int power){
     assert(false);
 }
 
-assert(pow(4,0) == 1);
-assert(pow(4,1) == 4);
-assert(pow(4,2) == 16);
-assert(pow(4,3) == 64);
+assertFloat(pow(4,0), 1);
+assertFloat(pow(4,1), 4);
+assertFloat(pow(4,2), 16);
+assertFloat(pow(4,3), 64);
 
 //test parameter scoping
 int val = 10;
