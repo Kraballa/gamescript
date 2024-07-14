@@ -20,7 +20,7 @@ whileBlock: 'while' '(' expression ')' block;
 
 block: '{' line* '}';
 
-declaration: type IDENTIFIER (equalOp expression)?;
+declaration: const? type IDENTIFIER (equalOp expression)?;
 
 assignment: (scope '.')? IDENTIFIER assignOp expression;
 
@@ -47,6 +47,7 @@ expression:
     | expression nullOp expression    # nullCoalescingExpression;
 
 scope: 'global';
+const: 'const';
 type: 'int' | 'float' | 'string' | 'bool';
 assignOp: '=' | '+=' | '-=';
 equalOp: '=';

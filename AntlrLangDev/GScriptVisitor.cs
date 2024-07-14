@@ -1,5 +1,4 @@
 ﻿
-using System.Security.Principal;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 
@@ -65,17 +64,22 @@ namespace AntlrLangDev
                 throw new Exception($"error, variable of name {identifier} was alrady declared.");
             }
             Type type = TypeFromString(context.type().GetText());
-            Memory[identifier] = new VariableData(identifier, type, DefaultValueFromType(type));
+            bool isConst = context.@const() != null;
+
             var expression = context.expression();
             if (expression == null)
             {
+                if(isConst){
+                    throw new Exception($"error, const variable declaration needs a value (line {context.Start.Line})");
+                }
+                Memory[identifier] = new VariableData(identifier, type, DefaultValueFromType(type));
                 return null;
             }
             object? result = Visit(expression);
             if(result == null){
                 throw new Exception($"error, assignment expression evaluated to null");
             }
-            Memory[identifier].Data = result;
+            Memory[identifier] = new VariableData(identifier, type, result, isConst);
             return null;
         }
 
@@ -97,6 +101,10 @@ namespace AntlrLangDev
             }
 
             VariableData variable = isVariable ? Memory[name] : ParamMemory[name];
+
+            if(variable.Constant){
+                throw new Exception($"error, illegal value assignment of const variable '{variable.Identifier}' (line {context.Start.Line})");
+            }
 
             if (operation == "=")
             {
