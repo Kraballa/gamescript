@@ -1,6 +1,6 @@
 namespace AntlrLangDev
 {
-    internal struct VariableData
+    internal class VariableData
     {
         public string Identifier;
         public Type Type;
@@ -13,5 +13,4 @@ namespace AntlrLangDev
             Data = data;
         }
     }
-
 }

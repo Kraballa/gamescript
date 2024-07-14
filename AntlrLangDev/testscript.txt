@@ -1,12 +1,12 @@
 print("# TESTSCRIPT");
 
-totalAsserts = 0;
-totalFailures = 0;
+int totalAsserts = 0;
+int totalFailures = 0;
 
-numAsserts = 0;
-numFailures = 0;
+int numAsserts = 0;
+int numFailures = 0;
 
-function assert(_obj){
+function assert(bool _obj){
     numAsserts = numAsserts + 1;
     totalAsserts = totalAsserts + 1;
     if(!_obj){
@@ -17,8 +17,8 @@ function assert(_obj){
 }
 
 function finalizeAssert(){
-    ratio = 100 - 100.0 * numFailures / numAsserts;
-    str = "result: " + (numAsserts - numFailures) + " / " + numAsserts + " (" + ratio + "% correct)";
+    float ratio = 100 - 100.0 * numFailures / numAsserts;
+    string str = "result: " + (numAsserts - numFailures) + " / " + numAsserts + " (" + ratio + "% correct)";
     print(str);
 
     numAsserts = 0;
@@ -28,13 +28,13 @@ function finalizeAssert(){
 function concludeTests(){
     print("-----------------------------------
 combined test results:");
-    ratio = 100 - 100.0 * totalFailures / totalAsserts;
-    str = "result: " + (totalAsserts - totalFailures) + " / " + totalAsserts + " (" + ratio + "% correct)";
+    float ratio = 100 - 100.0 * totalFailures / totalAsserts;
+    string str = "result: " + (totalAsserts - totalFailures) + " / " + totalAsserts + " (" + ratio + "% correct)";
     print(str);
 }
 
-test = 0;
-function a(test){
+int test = 0;
+function a(int test){
     test = 10;
 }
 assert(test == 0);
@@ -53,18 +53,18 @@ assert(0.001);
 
 assert(-5 < 0);
 
-a = 4.345;
+float a = 4.345;
 assert(a - a < 0.001);
 assert(a != 0);
 assert(a > 0);
-b = a < 0;
+bool b = a < 0;
 assert(!b);
 assert(!(b));
 assert(5 >= 5);
 assert(5 <= 5);
 assert(6 > 5);
 
-t = 5;
+int t = 5;
 assert(!t == false);
 assert(!!t == true);
 
@@ -108,7 +108,7 @@ finalizeAssert();
 print("## test comments");
 assert(true);
 //assert(false);
-i = 0; //assert(false);
+int i = 0; //assert(false);
 
 finalizeAssert();
 
@@ -117,10 +117,10 @@ print("## test functions");
 assert(10.4|int == 10);
 assert(10.9|int == 10); 
 
-function test(_str){
+function test(string _str){
     i = 10;
 
-    function test2(_str2){
+    function test2(string _str2){
         i = i * 2;
     }
     test2("test");
@@ -138,9 +138,8 @@ function test3(){
 }
 test3();
 
-function pow(val, power){
-    power = power|int;
-    ret = 1;
+function pow(float val, int power){
+    float ret = 1;
     i = 0;
     while(i < power){
         ret = ret * val;
@@ -156,9 +155,9 @@ assert(pow(4,2) == 16);
 assert(pow(4,3) == 64);
 
 //test parameter scoping
-val = 10;
-toAdd = 5;
-function add(val){
+int val = 10;
+int toAdd = 5;
+function add(int val){
     assert(val == 5);
     assert(global.val == 10);
     global.val += val;
@@ -168,11 +167,11 @@ add(toAdd);
 assert(val == 15);
 
 test = 0;
-function testA(test){
+function testA(int test){
     assert(test == 1);
     assert(global.test == 0);
 
-    function testB(test){
+    function testB(int test){
         assert(test == 2);
         assert(global.test == 0);
     }
@@ -181,7 +180,7 @@ function testA(test){
 testA(1);
 
 test = 0;
-function overwriteParamValue(test){
+function overwriteParamValue(int test){
     test = 2;
     assert(global.test == 0);
     assert(test == 2);
@@ -192,7 +191,7 @@ finalizeAssert();
 
 print("## hardcore function overwriting, parameter nesting stress test");
 
-xyz = 0;
+int xyz = 0;
 
 function aTest(){
     assert(false);
@@ -215,7 +214,7 @@ function bTest(){
 bTest();
 assert(xyz == 3);
 
-function recurse(i){
+function recurse(int i){
     if(i <= 0){
         return;
     }
@@ -223,7 +222,7 @@ function recurse(i){
 }
 recurse(10);
 
-function factorial(i){
+function factorial(int i){
     if(i <= 1){
         return 1;
     }

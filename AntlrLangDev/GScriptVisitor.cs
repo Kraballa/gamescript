@@ -9,11 +9,11 @@ namespace AntlrLangDev
     internal class GScriptVisitor : GScriptBaseVisitor<object?>
     {
 
-        public readonly StackDict<object> Memory = new();
+        public readonly StackDict<VariableData> Memory = new();
 
         private readonly Dictionary<string, Func<object[], object?>> ExternalFuncts = new();
         private readonly StackDict<NativeFuncData> NativeFuncts = new();
-        private readonly StackDict<object> ParamMemory = new();
+        private readonly StackDict<VariableData> ParamMemory = new();
 
         private bool functionReturned = false;
         private object? funcReturnData;
@@ -37,10 +37,12 @@ namespace AntlrLangDev
         {
             if (args.Length != 1)
                 throw new Exception($"error, expected one argument, got {args.Length}");
-            if(args[0] is string s){
+            if (args[0] is string s)
+            {
                 return s.Length;
             }
-            else{
+            else
+            {
                 return 1;
             }
         }
@@ -58,15 +60,22 @@ namespace AntlrLangDev
         public override object? VisitDeclaration([NotNull] GScriptParser.DeclarationContext context)
         {
             string identifier = context.IDENTIFIER().GetText();
-            if(Memory.ContainsKey(identifier)){
+            if (Memory.ContainsKey(identifier))
+            {
                 throw new Exception($"error, variable of name {identifier} was alrady declared.");
             }
-            Memory[identifier] = 0;
+            Type type = TypeFromString(context.type().GetText());
+            Memory[identifier] = new VariableData(identifier, type, DefaultValueFromType(type));
             var expression = context.expression();
-            if(expression == null){
+            if (expression == null)
+            {
                 return null;
             }
-            Memory[identifier] = Visit(expression);
+            object? result = Visit(expression);
+            if(result == null){
+                throw new Exception($"error, assignment expression evaluated to null");
+            }
+            Memory[identifier].Data = result;
             return null;
         }
 
@@ -83,20 +92,24 @@ namespace AntlrLangDev
             bool isVariable = scope != null && scope.GetText() == "global" //global variable
             || !ParamMemory.ContainsKey(name); //not in param list
 
+            if(!Memory.ContainsKey(name)){
+                throw new Exception($"error, variable '{name}' not declared (line {context.Start.Line})");
+            }
+
             if (operation == "=")
             {
                 if (isVariable)
                 {
-                    Memory[name] = value;
+                    Memory[name].Data = value;
                 }
                 else
                 {
-                    ParamMemory[name] = value;
+                    ParamMemory[name].Data = value;
                 }
                 return null;
             }
 
-            object val = isVariable ? Memory[name] : ParamMemory[name];
+            object val = isVariable ? Memory[name].Data : ParamMemory[name].Data;
             if (val is string s)
             {
                 if (operation == "+=")
@@ -148,11 +161,11 @@ namespace AntlrLangDev
             }
             if (isVariable)
             {
-                Memory[name] = val;
+                Memory[name].Data = val;
             }
             else
             {
-                ParamMemory[name] = val;
+                ParamMemory[name].Data = val;
             }
             return null;
         }
@@ -197,17 +210,17 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, cannot create new variable {varname} in global scope.");
                 }
-                return Memory[varname];
+                return Memory[varname].Data;
             }
             else
             {
                 if (ParamMemory.ContainsKey(varname))
                 {
-                    return ParamMemory[varname];
+                    return ParamMemory[varname].Data;
                 }
                 else if (Memory.ContainsKey(varname))
                 {
-                    return Memory[varname];
+                    return Memory[varname].Data;
                 }
             }
             throw new Exception($"(line {context.Start.Line}) error, variable {varname} not found");
@@ -577,6 +590,7 @@ namespace AntlrLangDev
         public override object? VisitFunctionDefinition([NotNull] GScriptParser.FunctionDefinitionContext context)
         {
             var idtfs = context.IDENTIFIER();
+            var types = context.type();
             string funcName = idtfs[0].GetText();
 
             if (ExternalFuncts.ContainsKey(funcName))
@@ -589,14 +603,18 @@ namespace AntlrLangDev
             }
 
             string[] _params = new string[idtfs.Length - 1];
+            Type[] _types = new Type[types.Length];
 
             for (int i = 1; i < idtfs.Length; i++)
             {
                 _params[i - 1] = idtfs[i].GetText();
             }
+            for(int i = 0; i < types.Length; i++){
+                _types[i] = TypeFromString(types[i].GetText());
+            }
 
             var block = context.block();
-            NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params));
+            NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params, _types));
             return null;
         }
 
@@ -666,7 +684,8 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, function parameter {funcData.ParamNames[i]} is null.");
                 }
-                ParamMemory.Add(funcData.ParamNames[i], value);
+                VariableData paramData = new VariableData(funcData.ParamNames[i], funcData.ParamTypes[i], value);
+                ParamMemory.Add(funcData.ParamNames[i], paramData);
             }
             Visit(funcData.Block);
             functionReturned = false;
@@ -694,6 +713,24 @@ namespace AntlrLangDev
             }
 
             throw new Exception($"error, can't decide truthiness of value {value} (type {value.GetType()}).");
+        }
+
+        private Type TypeFromString(string name){
+            switch(name){
+                case "int": return typeof(int);
+                case "float": return typeof(float);
+                case "string": return typeof(string);
+                case "bool": return typeof(bool);
+                default: throw new Exception($"error, unknown typename '{name}'.");
+            }
+        }
+
+        private object DefaultValueFromType(Type type){
+            if(type == typeof(int)) return 0;
+            else if(type == typeof(float)) return 0f;
+            else if(type == typeof(string)) return "";
+            else if(type == typeof(bool)) return false;
+            throw new Exception($"error, type '{type}' not recognised");
         }
     }
 }

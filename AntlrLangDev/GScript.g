@@ -25,7 +25,7 @@ declaration: type IDENTIFIER (equalOp expression)?;
 assignment: (scope '.')? IDENTIFIER assignOp expression;
 
 functionDefinition:
-    'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' block;
+    'function' IDENTIFIER '(' (type IDENTIFIER (',' type IDENTIFIER)*)? ')' block;
 
 functionCall:
     IDENTIFIER '(' (expression (',' expression)*)? ')';
