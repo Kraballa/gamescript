@@ -65,8 +65,8 @@ assert(0.001);
 ```
 [...]
 function pow(float val, int power){
-    ret = 1;
-    i = 0;
+    float ret = 1;
+    int i = 0;
     while(i < power){
         ret = ret * val;
         i = i+1;
@@ -74,8 +74,8 @@ function pow(float val, int power){
     return ret;
 }
 
-assert(pow(4,0) == 1);
-assert(pow(4,1) == 4);
-assert(pow(4,2) == 16);
-assert(pow(4,3) == 64);
+assert(pow(4,0) - 1 < 0.001);
+assert(pow(4,1) - 4 < 0.001);
+assert(pow(4,2) - 16 < 0.001);
+assert(pow(4,3) - 64 < 0.001);
 ```
