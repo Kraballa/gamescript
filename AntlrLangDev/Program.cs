@@ -21,8 +21,6 @@ class Program
         {
             Console.WriteLine("please supply a path to a script");
         }
-        Console.Write("press any key to continue...");
-        Console.ReadKey(true);
     }
 
     private static void RunScript(string path)

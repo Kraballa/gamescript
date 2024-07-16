@@ -25,7 +25,7 @@ declaration: const? type IDENTIFIER (equalOp expression)?;
 assignment: (scope '.')? IDENTIFIER assignOp expression;
 
 functionDefinition:
-    'function' IDENTIFIER '(' (type IDENTIFIER (',' type IDENTIFIER)*)? ')' block;
+    funcReturnType 'function' IDENTIFIER '(' (type IDENTIFIER (',' type IDENTIFIER)*)? ')' block;
 
 functionCall:
     IDENTIFIER '(' (expression (',' expression)*)? ')';
@@ -48,6 +48,7 @@ expression:
 
 scope: 'global';
 const: 'const';
+funcReturnType: type | 'void';
 type: 'int' | 'float' | 'string' | 'bool';
 assignOp: '=' | '+=' | '-=';
 equalOp: '=';

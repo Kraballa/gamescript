@@ -8,7 +8,7 @@ int totalFailures = 0;
 int numAsserts = 0;
 int numFailures = 0;
 
-function abs(float param){
+float function abs(float param){
     if(param < 0){
         return -param;
     }
@@ -17,11 +17,11 @@ function abs(float param){
     }
 }
 
-function assertFloat(float param1, float param2){
+void function assertFloat(float param1, float param2){
     assert(abs(param1 - param2) < epsilon);
 }
 
-function assert(bool _obj){
+void function assert(bool _obj){
     numAsserts = numAsserts + 1;
     totalAsserts = totalAsserts + 1;
     if(!_obj){
@@ -31,7 +31,7 @@ function assert(bool _obj){
     }
 }
 
-function finalizeAssert(){
+void function finalizeAssert(){
     float ratio = 100 - 100.0 * numFailures / numAsserts;
     string str = "result: " + (numAsserts - numFailures) + " / " + numAsserts + " (" + ratio + "% correct)";
     print(str);
@@ -40,7 +40,7 @@ function finalizeAssert(){
     numFailures = 0;
 }
 
-function concludeTests(){
+void function concludeTests(){
     print("-----------------------------------
 combined test results:");
     float ratio = 100 - 100.0 * totalFailures / totalAsserts;
@@ -49,7 +49,7 @@ combined test results:");
 }
 
 int test = 0;
-function a(int test){
+void function a(int test){
     test = 10;
 }
 assert(test == 0);
@@ -139,28 +139,28 @@ print("## test functions");
 assert(10.4|int == 10);
 assert(10.9|int == 10); 
 
-function test(string _str){
+void function test(string _str){
     i = 10;
 
-    function test2(string _str2){
+    void function test2(string _str2){
         i = i * 2;
     }
     test2("test");
     assert(i == 20);
 
-    function test3(){
+    void function test3(){
         assert(false);
     }
 }
 
 test("test1");
 
-function test3(){
+void function test3(){
     assert(true);
 }
 test3();
 
-function pow(float val, int power){
+float function pow(float val, int power){
     float ret = 1.0;
     i = 0;
     while(i < power){
@@ -179,7 +179,7 @@ assertFloat(pow(4,3), 64);
 //test parameter scoping
 int val = 10;
 int toAdd = 5;
-function add(int val){
+void function add(int val){
     assert(val == 5);
     assert(global.val == 10);
     global.val += val;
@@ -189,11 +189,11 @@ add(toAdd);
 assert(val == 15);
 
 test = 0;
-function testA(int test){
+void function testA(int test){
     assert(test == 1);
     assert(global.test == 0);
 
-    function testB(int test){
+    void function testB(int test){
         assert(test == 2);
         assert(global.test == 0);
     }
@@ -202,7 +202,7 @@ function testA(int test){
 testA(1);
 
 test = 0;
-function overwriteParamValue(int test){
+void function overwriteParamValue(int test){
     test = 2;
     assert(global.test == 0);
     assert(test == 2);
@@ -215,17 +215,17 @@ print("## hardcore function overwriting, parameter nesting stress test");
 
 int xyz = 0;
 
-function aTest(){
+void function aTest(){
     assert(false);
     xyz = 1;
 }
 
-function bTest(){
-    function aTest(){
+void function bTest(){
+    void function aTest(){
         assert(true);
         xyz = 2;
 
-        function aTest(){
+        void function aTest(){
             xyz = 3;
         }
         aTest();
@@ -236,7 +236,7 @@ function bTest(){
 bTest();
 assert(xyz == 3);
 
-function recurse(int i){
+void function recurse(int i){
     if(i <= 0){
         return;
     }
@@ -244,7 +244,7 @@ function recurse(int i){
 }
 recurse(10);
 
-function factorial(int i){
+int function factorial(int i){
     if(i <= 1){
         return 1;
     }
@@ -259,23 +259,27 @@ print("## test null coalescing");
 
 assert(null ?? true);
 
-function nullFunc(){
+void function nullFunc(){
     //return nothing
 }
 assert(nullFunc() ?? true);
 
-function nullFunc2(){
+bool function nullFunc2(){
     return true;
 }
 
 assert(nullFunc2() ?? false);
 
-function nullFunc3(){
-    return null;
+void function nullFunc3(){
+    return;
 }
 nullFunc();
 
 int memVal = 0;
+
+void function testWrongRetVal(){
+    return false;
+}
 
 finalizeAssert();
 

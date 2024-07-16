@@ -633,7 +633,8 @@ namespace AntlrLangDev
             }
 
             var block = context.block();
-            NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params, _types));
+            Type returnType = TypeFromString(context.funcReturnType().GetText());
+            NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params, _types, returnType));
             return null;
         }
 
@@ -650,6 +651,14 @@ namespace AntlrLangDev
                 NativeFuncts.EnterBlock();
                 ParamMemory.EnterBlock();
                 var ret = RunNativeFunction(context);
+                if (ret != null)
+                {
+                    var expectedRetType = NativeFuncts[ident].ReturnType;
+                    if (ret.GetType() != expectedRetType)
+                    {
+                        throw new Exception($"error, wrong function return type of function '{ident}'. expected '{expectedRetType}', got '{ret.GetType()}' (line {context.Start.Line})");
+                    }
+                }
                 Memory.ExitBlock();
                 NativeFuncts.ExitBlock();
                 ParamMemory.ExitBlock();
@@ -664,6 +673,8 @@ namespace AntlrLangDev
             if (expr != null)
             {
                 funcReturnData = Visit(expr);
+            }else{
+                funcReturnData = null;
             }
             functionReturned = true;
             return null;
@@ -708,6 +719,9 @@ namespace AntlrLangDev
             }
             Visit(funcData.Block);
             functionReturned = false;
+            if(funcData.ReturnType == typeof(void)){
+                funcReturnData = null;
+            }
             return funcReturnData;
         }
 
@@ -742,6 +756,7 @@ namespace AntlrLangDev
                 case "float": return typeof(float);
                 case "string": return typeof(string);
                 case "bool": return typeof(bool);
+                case "void": return typeof(void);
                 default: throw new Exception($"error, unknown typename '{name}'.");
             }
         }
