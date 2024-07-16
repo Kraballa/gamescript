@@ -25,7 +25,7 @@ declaration: const? type IDENTIFIER (equalOp expression)?;
 assignment: (scope '.')? IDENTIFIER assignOp expression;
 
 functionDefinition:
-    funcReturnType 'function' IDENTIFIER '(' (type IDENTIFIER (',' type IDENTIFIER)*)? ')' block;
+    funcReturnType IDENTIFIER '(' (type IDENTIFIER (',' type IDENTIFIER)*)? ')' block;
 
 functionCall:
     IDENTIFIER '(' (expression (',' expression)*)? ')';
