@@ -7,12 +7,12 @@ namespace AntlrLangDev
 
     internal class GScriptVisitor : GScriptBaseVisitor<object?>
     {
-
         public readonly StackDict<VariableData> Memory = new();
 
         private readonly Dictionary<string, Func<object[], object?>> ExternalFuncts = new();
         private readonly StackDict<NativeFuncData> NativeFuncts = new();
         private readonly StackDict<VariableData> ParamMemory = new();
+        private readonly Stack<NativeFuncData> FunctionCallStack = new();
 
         private bool functionReturned = false;
         private object? funcReturnData;
@@ -640,6 +640,7 @@ namespace AntlrLangDev
 
         public override object? VisitFunctionCall([NotNull] GScriptParser.FunctionCallContext context)
         {
+            funcReturnData = null;
             var ident = context.IDENTIFIER().GetText();
             if (ExternalFuncts.ContainsKey(ident))
             {
@@ -651,14 +652,9 @@ namespace AntlrLangDev
                 NativeFuncts.EnterBlock();
                 ParamMemory.EnterBlock();
                 var ret = RunNativeFunction(context);
-                if (ret != null)
-                {
-                    var expectedRetType = NativeFuncts[ident].ReturnType;
-                    if (ret.GetType() != expectedRetType)
-                    {
-                        throw new Exception($"error, wrong function return type of function '{ident}'. expected '{expectedRetType}', got '{ret.GetType()}' (line {context.Start.Line})");
-                    }
-                }
+
+                ValidateFunctionReturnType(NativeFuncts[ident].ReturnType, context.Start.Line);
+
                 Memory.ExitBlock();
                 NativeFuncts.ExitBlock();
                 ParamMemory.ExitBlock();
@@ -673,10 +669,17 @@ namespace AntlrLangDev
             if (expr != null)
             {
                 funcReturnData = Visit(expr);
-            }else{
+            }
+            else
+            {
                 funcReturnData = null;
             }
             functionReturned = true;
+
+            NativeFuncData funcData = FunctionCallStack.Peek();
+
+            ValidateFunctionReturnType(funcData.ReturnType, context.Start.Line);
+
             return null;
         }
 
@@ -717,9 +720,13 @@ namespace AntlrLangDev
                 VariableData paramData = new VariableData(funcData.ParamNames[i], funcData.ParamTypes[i], value);
                 ParamMemory.Add(funcData.ParamNames[i], paramData);
             }
+            FunctionCallStack.Push(funcData);
             Visit(funcData.Block);
+            FunctionCallStack.Pop();
+
             functionReturned = false;
-            if(funcData.ReturnType == typeof(void)){
+            if (funcData.ReturnType == typeof(void))
+            {
                 funcReturnData = null;
             }
             return funcReturnData;
@@ -768,6 +775,18 @@ namespace AntlrLangDev
             else if (type == typeof(string)) return "";
             else if (type == typeof(bool)) return false;
             throw new Exception($"error, type '{type}' not recognised");
+        }
+
+        private void ValidateFunctionReturnType(Type expectedType, int line)
+        {
+            bool returnValid = funcReturnData == null && expectedType == typeof(void) || (funcReturnData != null && expectedType == funcReturnData.GetType());
+
+            if (!returnValid)
+            {
+                Type receivedType = funcReturnData == null ? typeof(void) : funcReturnData.GetType();
+
+                throw new Exception($"error, invalid return type. expected '{expectedType}', got '{receivedType}' (line {line})");
+            }
         }
     }
 }
