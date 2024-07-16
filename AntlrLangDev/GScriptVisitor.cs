@@ -678,6 +678,11 @@ namespace AntlrLangDev
 
             NativeFuncData funcData = FunctionCallStack.Peek();
 
+            if(funcReturnData != null && funcData.ReturnType == typeof(float) && funcReturnData.GetType() == typeof(int)){
+                funcReturnData = Convert.ToSingle(funcReturnData);
+            }
+
+            // validate return statement type
             ValidateFunctionReturnType(funcData.ReturnType, context.Start.Line);
 
             return null;
