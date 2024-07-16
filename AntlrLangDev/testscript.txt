@@ -277,9 +277,20 @@ nullFunc();
 
 int memVal = 0;
 
-void function testWrongRetVal(){
-    return false;
+void function testReturnNothing(){
+    return;
 }
+testReturnNothing();
+
+void function testNoReturn(){
+
+}
+testNoReturn();
+
+float function testIntReturnOnFloat(){
+    return 1;
+}
+testIntReturnOnFloat();
 
 finalizeAssert();
 
