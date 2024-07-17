@@ -1,6 +1,24 @@
-i = 1;
-print(i);
-i += 4;
-print(i);
-i -= 2;
-print(i);
+const float epsilon = 0.1;
+
+
+
+float function abs(float param){
+    if(param < 0){
+        return -param;
+    }
+    else{
+        return param;
+    }
+}
+
+void function assert(bool _obj){
+    if(!_obj){
+        print("assertion failed");
+    }
+}
+
+void function assertFloat(float param1, float param2){
+    assert(abs(param1 - param2) < epsilon);
+}
+
+assertFloat(1.100001, 1.1);

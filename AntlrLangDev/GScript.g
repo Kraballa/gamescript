@@ -10,7 +10,7 @@ line:
     | functionDefinition # functionDefinitionLine
     | returnStatement    # returnStatementLine;
 
-statement: assignment | functionCall;
+statement: declaration | assignment | functionCall;
 
 ifBlock: 'if' '(' expression ')' block ('else' elseIfBlock)?;
 
@@ -20,10 +20,12 @@ whileBlock: 'while' '(' expression ')' block;
 
 block: '{' line* '}';
 
+declaration: const? type IDENTIFIER (equalOp expression)?;
+
 assignment: (scope '.')? IDENTIFIER assignOp expression;
 
 functionDefinition:
-    'function' IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)*)? ')' block;
+    funcReturnType IDENTIFIER '(' (type IDENTIFIER (',' type IDENTIFIER)*)? ')' block;
 
 functionCall:
     IDENTIFIER '(' (expression (',' expression)*)? ')';
@@ -45,8 +47,11 @@ expression:
     | expression nullOp expression    # nullCoalescingExpression;
 
 scope: 'global';
+const: 'const';
+funcReturnType: type | 'void';
 type: 'int' | 'float' | 'string' | 'bool';
 assignOp: '=' | '+=' | '-=';
+equalOp: '=';
 multOp: '*' | '/' | '%';
 addOp: '+' | '-';
 compareOp: '==' | '!=' | '>' | '<' | '>=' | '<=';

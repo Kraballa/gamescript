@@ -9,13 +9,17 @@ class Program
     {
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 
-        if (args.Length == 2 && File.Exists(args[1]))
+        if (args.Length == 1 && File.Exists(args[0]))
         {
-            RunScript(args[1]);
+            RunScript(args[0]);
+        }
+        else if (File.Exists("testscript.txt"))
+        {
+            RunScript("testscript.txt");
         }
         else
         {
-            RunScript("testscript.txt");
+            Console.WriteLine("please supply a path to a script");
         }
     }
 

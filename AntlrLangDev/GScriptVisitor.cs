@@ -1,5 +1,4 @@
 ﻿
-using System.Security.Principal;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 
@@ -8,12 +7,12 @@ namespace AntlrLangDev
 
     internal class GScriptVisitor : GScriptBaseVisitor<object?>
     {
-
-        public readonly StackDict<object> Memory = new();
+        public readonly StackDict<VariableData> Memory = new();
 
         private readonly Dictionary<string, Func<object[], object?>> ExternalFuncts = new();
         private readonly StackDict<NativeFuncData> NativeFuncts = new();
-        private readonly StackDict<object> ParamMemory = new();
+        private readonly StackDict<VariableData> ParamMemory = new();
+        private readonly Stack<NativeFuncData> FunctionCallStack = new();
 
         private bool functionReturned = false;
         private object? funcReturnData;
@@ -37,10 +36,12 @@ namespace AntlrLangDev
         {
             if (args.Length != 1)
                 throw new Exception($"error, expected one argument, got {args.Length}");
-            if(args[0] is string s){
+            if (args[0] is string s)
+            {
                 return s.Length;
             }
-            else{
+            else
+            {
                 return 1;
             }
         }
@@ -53,6 +54,44 @@ namespace AntlrLangDev
         protected override bool ShouldVisitNextChild(IRuleNode node, object? currentResult)
         {
             return !functionReturned;
+        }
+
+        public override object? VisitDeclaration([NotNull] GScriptParser.DeclarationContext context)
+        {
+            string identifier = context.IDENTIFIER().GetText();
+            if (Memory.ContainsKey(identifier))
+            {
+                throw new Exception($"error, variable of name {identifier} was alrady declared.");
+            }
+            Type type = TypeFromString(context.type().GetText());
+            bool isConst = context.@const() != null;
+
+            var expression = context.expression();
+            if (expression == null)
+            {
+                if (isConst)
+                {
+                    throw new Exception($"error, const variable declaration needs a value (line {context.Start.Line})");
+                }
+                Memory[identifier] = new VariableData(identifier, type, DefaultValueFromType(type));
+                return null;
+            }
+            object? result = Visit(expression);
+            if (result == null)
+            {
+                throw new Exception($"error, assignment expression evaluated to null");
+            }
+            if (type == typeof(float) && result.GetType() == typeof(int))
+            {
+                result = Convert.ToSingle(result);
+            }
+            if (result.GetType() != type)
+            {
+                throw new Exception($"error, trying to assign value of type '{result.GetType()}' to variable of type '{type}' (line {context.Start.Line})");
+            }
+
+            Memory[identifier] = new VariableData(identifier, type, result, isConst);
+            return null;
         }
 
         public override object? VisitAssignment([NotNull] GScriptParser.AssignmentContext context)
@@ -68,32 +107,47 @@ namespace AntlrLangDev
             bool isVariable = scope != null && scope.GetText() == "global" //global variable
             || !ParamMemory.ContainsKey(name); //not in param list
 
+            if (!Memory.ContainsKey(name))
+            {
+                throw new Exception($"error, variable '{name}' not declared (line {context.Start.Line})");
+            }
+
+            VariableData variable = isVariable ? Memory[name] : ParamMemory[name];
+
+            if (variable.Constant)
+            {
+                throw new Exception($"error, illegal value assignment of const variable '{variable.Identifier}' (line {context.Start.Line})");
+            }
+
             if (operation == "=")
             {
-                if (isVariable)
+                if (variable.Type == value.GetType())
                 {
-                    Memory[name] = value;
+                    variable.Data = value;
+                }
+                else if (variable.Type == typeof(float) && value.GetType() == typeof(int))
+                {
+                    variable.Data = Convert.ToSingle(value);
                 }
                 else
                 {
-                    ParamMemory[name] = value;
+                    throw new Exception($"error, cannot assign value of type '{value.GetType()}' to variable of type '{variable.Type}' (line {context.Start.Line})");
                 }
                 return null;
             }
 
-            object val = isVariable ? Memory[name] : ParamMemory[name];
-            if (val is string s)
+            if (variable.Data is string s)
             {
                 if (operation == "+=")
                 {
-                    val = s += value;
+                    variable.Data = s += value;
                 }
                 else
                 {
                     throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for strings.");
                 }
             }
-            else if (val is float f)
+            else if (variable.Data is float f)
             {
                 float operand = Convert.ToSingle(value);
                 if (operation == "+=")
@@ -108,9 +162,9 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for floats.");
                 }
-                val = f;
+                variable.Data = f;
             }
-            else if (val is int i)
+            else if (variable.Data is int i)
             {
                 int operand = Convert.ToInt32(value);
                 if (operation == "+=")
@@ -125,19 +179,11 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, operation '{operation}' not defined for floats.");
                 }
-                val = i;
+                variable.Data = i;
             }
             else
             {
-                throw new Exception($"(line {context.Start.Line}) error, assignment for variable of type '{val.GetType()}'.");
-            }
-            if (isVariable)
-            {
-                Memory[name] = val;
-            }
-            else
-            {
-                ParamMemory[name] = val;
+                throw new Exception($"(line {context.Start.Line}) error, assignment for variable of type '{variable.Data.GetType()}'.");
             }
             return null;
         }
@@ -182,17 +228,17 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, cannot create new variable {varname} in global scope.");
                 }
-                return Memory[varname];
+                return Memory[varname].Data;
             }
             else
             {
                 if (ParamMemory.ContainsKey(varname))
                 {
-                    return ParamMemory[varname];
+                    return ParamMemory[varname].Data;
                 }
                 else if (Memory.ContainsKey(varname))
                 {
-                    return Memory[varname];
+                    return Memory[varname].Data;
                 }
             }
             throw new Exception($"(line {context.Start.Line}) error, variable {varname} not found");
@@ -219,12 +265,13 @@ namespace AntlrLangDev
             if (targetType == "float")
             {
                 if (varType == typeof(float)) return var;
-                if (varType == typeof(int)) return (int)(float)var;
+                else if (varType == typeof(int)) return Convert.ToSingle(var);
             }
             else if (targetType == "int")
             {
-                if (varType == typeof(float)) return (int)(float)var;
-                if (varType == typeof(int)) return var;
+                // intentional double cast, get rid of decimal
+                if (varType == typeof(float)) return (int)(float)var; 
+                else if (varType == typeof(int)) return var;
             }
             throw new Exception($"(line {context.Start.Line}) error, conversion from {varType} to {targetType} not supported");
         }
@@ -319,7 +366,7 @@ namespace AntlrLangDev
                     }
                     else
                     {
-                        return (float)((double)res1 + (double)res2);
+                        return Convert.ToSingle(Convert.ToDouble(res1) + Convert.ToDouble(res2));
                     }
                 case "-":
                     if (isInt)
@@ -562,6 +609,7 @@ namespace AntlrLangDev
         public override object? VisitFunctionDefinition([NotNull] GScriptParser.FunctionDefinitionContext context)
         {
             var idtfs = context.IDENTIFIER();
+            var types = context.type();
             string funcName = idtfs[0].GetText();
 
             if (ExternalFuncts.ContainsKey(funcName))
@@ -574,19 +622,26 @@ namespace AntlrLangDev
             }
 
             string[] _params = new string[idtfs.Length - 1];
+            Type[] _types = new Type[types.Length];
 
             for (int i = 1; i < idtfs.Length; i++)
             {
                 _params[i - 1] = idtfs[i].GetText();
             }
+            for (int i = 0; i < types.Length; i++)
+            {
+                _types[i] = TypeFromString(types[i].GetText());
+            }
 
             var block = context.block();
-            NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params));
+            Type returnType = TypeFromString(context.funcReturnType().GetText());
+            NativeFuncts.Add(funcName, new NativeFuncData(funcName, block, _params, _types, returnType));
             return null;
         }
 
         public override object? VisitFunctionCall([NotNull] GScriptParser.FunctionCallContext context)
         {
+            funcReturnData = null;
             var ident = context.IDENTIFIER().GetText();
             if (ExternalFuncts.ContainsKey(ident))
             {
@@ -598,6 +653,9 @@ namespace AntlrLangDev
                 NativeFuncts.EnterBlock();
                 ParamMemory.EnterBlock();
                 var ret = RunNativeFunction(context);
+
+                ValidateFunctionReturnType(NativeFuncts[ident].ReturnType, context.Start.Line);
+
                 Memory.ExitBlock();
                 NativeFuncts.ExitBlock();
                 ParamMemory.ExitBlock();
@@ -613,7 +671,22 @@ namespace AntlrLangDev
             {
                 funcReturnData = Visit(expr);
             }
+            else
+            {
+                funcReturnData = null;
+            }
             functionReturned = true;
+
+            NativeFuncData funcData = FunctionCallStack.Peek();
+
+            if (funcReturnData != null && funcData.ReturnType == typeof(float) && funcReturnData.GetType() == typeof(int))
+            {
+                funcReturnData = Convert.ToSingle(funcReturnData);
+            }
+
+            // validate return statement type
+            ValidateFunctionReturnType(funcData.ReturnType, context.Start.Line);
+
             return null;
         }
 
@@ -651,10 +724,35 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, function parameter {funcData.ParamNames[i]} is null.");
                 }
-                ParamMemory.Add(funcData.ParamNames[i], value);
+                if (value.GetType() == typeof(int) && funcData.ParamTypes[i] == typeof(float))
+                {
+                    value = Convert.ToSingle(value);
+                }
+                else if (funcData.ParamTypes[i] == typeof(bool))
+                {
+                    value = IsTruthy(value);
+                }
+                else if (funcData.ParamTypes[i] == typeof(string))
+                {
+                    value = value.ToString();
+                }
+                else if (value.GetType() != funcData.ParamTypes[i])
+                {
+                    throw new Exception($"error, expected param of type '{funcData.ParamTypes[i]}' but got '{value.GetType()}' (line {context.Start.Line})");
+                }
+
+                VariableData paramData = new VariableData(funcData.ParamNames[i], funcData.ParamTypes[i], value);
+                ParamMemory.Add(funcData.ParamNames[i], paramData);
             }
+            FunctionCallStack.Push(funcData);
             Visit(funcData.Block);
+            FunctionCallStack.Pop();
+
             functionReturned = false;
+            if (funcData.ReturnType == typeof(void))
+            {
+                funcReturnData = null;
+            }
             return funcReturnData;
         }
 
@@ -679,6 +777,40 @@ namespace AntlrLangDev
             }
 
             throw new Exception($"error, can't decide truthiness of value {value} (type {value.GetType()}).");
+        }
+
+        private Type TypeFromString(string name)
+        {
+            switch (name)
+            {
+                case "int": return typeof(int);
+                case "float": return typeof(float);
+                case "string": return typeof(string);
+                case "bool": return typeof(bool);
+                case "void": return typeof(void);
+                default: throw new Exception($"error, unknown typename '{name}'.");
+            }
+        }
+
+        private object DefaultValueFromType(Type type)
+        {
+            if (type == typeof(int)) return 0;
+            else if (type == typeof(float)) return 0f;
+            else if (type == typeof(string)) return "";
+            else if (type == typeof(bool)) return false;
+            throw new Exception($"error, type '{type}' not recognised");
+        }
+
+        private void ValidateFunctionReturnType(Type expectedType, int line)
+        {
+            bool returnValid = funcReturnData == null && expectedType == typeof(void) || (funcReturnData != null && expectedType == funcReturnData.GetType());
+
+            if (!returnValid)
+            {
+                Type receivedType = funcReturnData == null ? typeof(void) : funcReturnData.GetType();
+
+                throw new Exception($"error, invalid return type. expected '{expectedType}', got '{receivedType}' (line {line})");
+            }
         }
     }
 }
