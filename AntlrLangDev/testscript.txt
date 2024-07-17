@@ -292,6 +292,11 @@ float testIntReturnOnFloat(){
 }
 testIntReturnOnFloat();
 
+// automatically downcast if possible
+void testParamType(string val1, float thing, bool other){
+}
+testParamType(3, 5, 1.1);
+
 finalizeAssert();
 
 concludeTests();

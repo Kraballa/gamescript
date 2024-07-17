@@ -265,12 +265,13 @@ namespace AntlrLangDev
             if (targetType == "float")
             {
                 if (varType == typeof(float)) return var;
-                if (varType == typeof(int)) return (int)(float)var;
+                else if (varType == typeof(int)) return Convert.ToSingle(var);
             }
             else if (targetType == "int")
             {
-                if (varType == typeof(float)) return (int)(float)var;
-                if (varType == typeof(int)) return var;
+                // intentional double cast, get rid of decimal
+                if (varType == typeof(float)) return (int)(float)var; 
+                else if (varType == typeof(int)) return var;
             }
             throw new Exception($"(line {context.Start.Line}) error, conversion from {varType} to {targetType} not supported");
         }
@@ -678,7 +679,8 @@ namespace AntlrLangDev
 
             NativeFuncData funcData = FunctionCallStack.Peek();
 
-            if(funcReturnData != null && funcData.ReturnType == typeof(float) && funcReturnData.GetType() == typeof(int)){
+            if (funcReturnData != null && funcData.ReturnType == typeof(float) && funcReturnData.GetType() == typeof(int))
+            {
                 funcReturnData = Convert.ToSingle(funcReturnData);
             }
 
@@ -722,6 +724,23 @@ namespace AntlrLangDev
                 {
                     throw new Exception($"(line {context.Start.Line}) error, function parameter {funcData.ParamNames[i]} is null.");
                 }
+                if (value.GetType() == typeof(int) && funcData.ParamTypes[i] == typeof(float))
+                {
+                    value = Convert.ToSingle(value);
+                }
+                else if (funcData.ParamTypes[i] == typeof(bool))
+                {
+                    value = IsTruthy(value);
+                }
+                else if (funcData.ParamTypes[i] == typeof(string))
+                {
+                    value = value.ToString();
+                }
+                else if (value.GetType() != funcData.ParamTypes[i])
+                {
+                    throw new Exception($"error, expected param of type '{funcData.ParamTypes[i]}' but got '{value.GetType()}' (line {context.Start.Line})");
+                }
+
                 VariableData paramData = new VariableData(funcData.ParamNames[i], funcData.ParamTypes[i], value);
                 ParamMemory.Add(funcData.ParamNames[i], paramData);
             }
