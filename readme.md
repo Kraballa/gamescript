@@ -3,7 +3,7 @@
 
 ## Features
 - 4 types: int, float, string, bool
-- functions, both native (defined inside gamescript), and external (callback to csharp)
+- functions, both native (defined inside gamescript), and external (callback to host)
 - scoped variables, name overloading and parameter overloading with a `global` keyword
 - nested functions, function scoping and overloading
 - statically typed variables
@@ -17,18 +17,18 @@ For a lot of code check `testscript.txt`, it contains the entire test suite with
 
 ### Scoping Behavior
 ```
-function assert(bool ojb){
+void assert(bool obj){
     if(!obj){
         print("error, assertion failed");
     }
 }
 
 int test = 0;
-function testA(int test){
+void testA(int test){
     assert(test == 1);
     assert(global.test == 0);
 
-    function testB(int test){
+    void testB(int test){
         assert(test == 2);
         assert(global.test == 0);
     }
@@ -61,7 +61,7 @@ assert(0.001);
 ### Power Function
 ```
 [...]
-function pow(float val, int power){
+float pow(float val, int power){
     float ret = 1;
     int i = 0;
     while(i < power){
