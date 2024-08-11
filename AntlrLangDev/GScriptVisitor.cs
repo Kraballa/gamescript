@@ -270,7 +270,7 @@ namespace AntlrLangDev
             else if (targetType == "int")
             {
                 // intentional double cast, get rid of decimal
-                if (varType == typeof(float)) return (int)(float)var; 
+                if (varType == typeof(float)) return (int)(float)var;
                 else if (varType == typeof(int)) return var;
             }
             throw new Exception($"(line {context.Start.Line}) error, conversion from {varType} to {targetType} not supported");
@@ -494,17 +494,14 @@ namespace AntlrLangDev
             var expressions = context.expression();
 
             var res1 = Visit(expressions[0]);
+            //early exit
+            if (res1 != null && res1.GetType() == typeof(bool) && !(bool)res1)
+            {
+                return false;
+            }
+
             var res2 = Visit(expressions[1]);
-
-            if (res1 == null || res2 == null)
-            {
-                throw new Exception($"(line {context.Start.Line}) error, and operation not defined for null type.");
-            }
-
-            if (res1.GetType() != typeof(bool) || res2.GetType() != typeof(bool))
-            {
-                throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator.");
-            }
+            Validation.ValidateBoolOperands(context.Start.Line, res1, res2);
             return (bool)res1 & (bool)res2;
         }
 
@@ -513,17 +510,12 @@ namespace AntlrLangDev
             var expressions = context.expression();
 
             var res1 = Visit(expressions[0]);
+            if (res1 != null && res1.GetType() == typeof(bool) && (bool)res1)
+            {
+                return true;
+            }
             var res2 = Visit(expressions[1]);
-
-            if (res1 == null || res2 == null)
-            {
-                throw new Exception($"(line {context.Start.Line}) error, or operation not defined for null type.");
-            }
-
-            if (res1.GetType() != typeof(bool) || res2.GetType() != typeof(bool))
-            {
-                throw new Exception($"(line {context.Start.Line}) error, non-boolean value used for bool operator.");
-            }
+            Validation.ValidateBoolOperands(context.Start.Line, res1, res2);
             return (bool)res1 | (bool)res2;
         }
 
@@ -563,11 +555,7 @@ namespace AntlrLangDev
         public override object VisitEnclosedExpression([NotNull] GScriptParser.EnclosedExpressionContext context)
         {
             object? res = Visit(context.expression());
-            if (res == null)
-            {
-                throw new Exception($"(line {context.Start.Line}) error, enclosed expression evaluated to null.");
-            }
-
+            Validation.ValidateNotNull(context.Start.Line, res);
             return res;
         }
 
@@ -597,7 +585,6 @@ namespace AntlrLangDev
                 var elifBlock = context.elseIfBlock();
                 if (elifBlock != null)
                 {
-
                     Visit(elifBlock);
                 }
             }
@@ -756,7 +743,7 @@ namespace AntlrLangDev
             return funcReturnData;
         }
 
-        private bool IsTruthy(object? value)
+        private static bool IsTruthy(object? value)
         {
             if (value == null)
             {
@@ -779,7 +766,7 @@ namespace AntlrLangDev
             throw new Exception($"error, can't decide truthiness of value {value} (type {value.GetType()}).");
         }
 
-        private Type TypeFromString(string name)
+        private static Type TypeFromString(string name)
         {
             switch (name)
             {
@@ -792,7 +779,7 @@ namespace AntlrLangDev
             }
         }
 
-        private object DefaultValueFromType(Type type)
+        private static object DefaultValueFromType(Type type)
         {
             if (type == typeof(int)) return 0;
             else if (type == typeof(float)) return 0f;
